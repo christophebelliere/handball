@@ -1,0 +1,24 @@
+.DS_Store
+
+# Fichiers generes : ils contiennent tous un horodatage de generation
+# (DTSTAMP du .ics, genere_le du .json) et changeraient a chaque collecte,
+# soit 8 commits par jour sans interet. Ils sont reconstruits a chaque run.
+# Seul .suivi_handball_etat.json est versionne : il sert aux alertes
+# "nouveau match / score mis a jour" d'une execution a l'autre.
+index.html
+matchs.json
+calendrier.ics
+suivi_handball.csv
+
+# Sortie de publication : reconstruite a chaque envoi
+dist/
+dist*/
+
+# Caches locaux
+ffhb_poules_index.json
+__pycache__/
+*.pyc
+
+# Journal de collecte cote serveur
+collecte.log
+.collecte.lock

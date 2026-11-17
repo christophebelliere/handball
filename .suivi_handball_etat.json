@@ -1,0 +1,354 @@
+{
+ "U13M Bonsecours|2742111": {
+  "date": "2026-10-10",
+  "joue": true,
+  "score_dom": "11",
+  "score_ext": "28",
+  "domicile": "AL BUQUET-ELBEUF HB",
+  "exterieur": "E BONSECOURS/BELBEUF"
+ },
+ "U13M Bonsecours|2742112": {
+  "date": "2026-10-10",
+  "joue": true,
+  "score_dom": "29",
+  "score_ext": "13",
+  "domicile": "E BONSECOURS/BELBEUF",
+  "exterieur": "MONTVILLE HB"
+ },
+ "U13M Bonsecours|2707021": {
+  "date": "2026-10-03",
+  "joue": true,
+  "score_dom": "35",
+  "score_ext": "19",
+  "domicile": "E BONSECOURS/BELBEUF",
+  "exterieur": "US STEPHANAISE HB"
+ },
+ "U13M Bonsecours|2707017": {
+  "date": "2026-09-19",
+  "joue": true,
+  "score_dom": "14",
+  "score_ext": "23",
+  "domicile": "QUEVILLY-COURONNE HB",
+  "exterieur": "E BONSECOURS/BELBEUF"
+ },
+ "U13M Bonsecours|2707018": {
+  "date": "2026-09-26",
+  "joue": true,
+  "score_dom": "34",
+  "score_ext": "3",
+  "domicile": "E BONSECOURS/BELBEUF",
+  "exterieur": "AL BUQUET-ELBEUF HB"
+ },
+ "U13M Bonsecours|2756495": {
+  "date": "2026-11-07",
+  "joue": true,
+  "score_dom": "23",
+  "score_ext": "23",
+  "domicile": "GCO BIHOREL 2",
+  "exterieur": "E BONSECOURS/BELBEUF"
+ },
+ "U13M Bonsecours|2756499": {
+  "date": "2026-11-21",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "E BONSECOURS/BELBEUF",
+  "exterieur": "HBC AUFFAY-TOTES 1"
+ },
+ "U13M Bonsecours|2756501": {
+  "date": "2026-12-05",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "E BONSECOURS/BELBEUF",
+  "exterieur": "GCO BIHOREL 2"
+ },
+ "U13M Bonsecours|2756505": {
+  "date": "2026-12-19",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "HBC AUFFAY-TOTES 1",
+  "exterieur": "E BONSECOURS/BELBEUF"
+ },
+ "U15M Bonsecours|2757139": {
+  "date": "2026-11-14",
+  "joue": true,
+  "score_dom": "29",
+  "score_ext": "24",
+  "domicile": "E BONSECOURS/BELBEUF",
+  "exterieur": "MONTVILLE HB 2"
+ },
+ "U15M Bonsecours|2757136": {
+  "date": "2026-11-07",
+  "joue": true,
+  "score_dom": "25",
+  "score_ext": "32",
+  "domicile": "AS GOURNAY PAYS DE BRAY HB 2",
+  "exterieur": "E BONSECOURS/BELBEUF"
+ },
+ "U15M Bonsecours|2757141": {
+  "date": "2026-11-21",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "ES AUMALE 2",
+  "exterieur": "E BONSECOURS/BELBEUF"
+ },
+ "U15M Bonsecours|2757142": {
+  "date": "2026-12-05",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "E BONSECOURS/BELBEUF",
+  "exterieur": "AS GOURNAY PAYS DE BRAY HB 2"
+ },
+ "U15M Bonsecours|2757145": {
+  "date": "2026-12-12",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "MONTVILLE HB 2",
+  "exterieur": "E BONSECOURS/BELBEUF"
+ },
+ "U15M Bonsecours|2757147": {
+  "date": "2026-12-19",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "E BONSECOURS/BELBEUF",
+  "exterieur": "ES AUMALE 2"
+ },
+ "U15M Bonsecours|2742103": {
+  "date": "2026-10-10",
+  "joue": true,
+  "score_dom": "PE",
+  "score_ext": "10",
+  "domicile": "QUEVILLY-COURONNE HB",
+  "exterieur": "E BONSECOURS/BELBEUF (-15M DEP)"
+ },
+ "U15M Bonsecours|2706589": {
+  "date": "2026-10-04",
+  "joue": true,
+  "score_dom": "23",
+  "score_ext": "50",
+  "domicile": "QUEVILLY-COURONNE HB",
+  "exterieur": "E BONSECOURS/BELBEUF (-15M DEP)"
+ },
+ "U15M Bonsecours|2706584": {
+  "date": "2026-09-19",
+  "joue": true,
+  "score_dom": "24",
+  "score_ext": "36",
+  "domicile": "AS GOURNAY PAYS DE BRAY HB 2",
+  "exterieur": "E BONSECOURS/BELBEUF (-15M DEP)"
+ },
+ "U15M Bonsecours|2706587": {
+  "date": "2026-09-26",
+  "joue": true,
+  "score_dom": "39",
+  "score_ext": "21",
+  "domicile": "E BONSECOURS/BELBEUF (-15M DEP)",
+  "exterieur": "AL CESAIRE LEVILLAIN HB 2"
+ },
+ "SeniorF Belbeuf|2690544": {
+  "date": "2026-09-12",
+  "joue": true,
+  "score_dom": "31",
+  "score_ext": "18",
+  "domicile": "HBC BELBEUF PLATEAU EST",
+  "exterieur": "QUEVILLY COURONNE HB"
+ },
+ "SeniorF Belbeuf|2729241": {
+  "date": "2026-10-17",
+  "joue": true,
+  "score_dom": "34",
+  "score_ext": "4",
+  "domicile": "HBC BELBEUF PLATEAU EST",
+  "exterieur": "C.S. ANDELYS"
+ },
+ "SeniorF Belbeuf|2691153": {
+  "date": "2026-11-14",
+  "joue": true,
+  "score_dom": "26",
+  "score_ext": "17",
+  "domicile": "HBC BELBEUF PLATEAU EST",
+  "exterieur": "E NORD FEMININ 76 (ARQUES) 2"
+ },
+ "SeniorF Belbeuf|2691120": {
+  "date": "2026-09-19",
+  "joue": true,
+  "score_dom": "20",
+  "score_ext": "34",
+  "domicile": "HBC BELBEUF PLATEAU EST",
+  "exterieur": "NEUFCHATEL HB"
+ },
+ "SeniorF Belbeuf|2691125": {
+  "date": "2026-09-26",
+  "joue": true,
+  "score_dom": "22",
+  "score_ext": "25",
+  "domicile": "GCO BIHOREL",
+  "exterieur": "HBC BELBEUF PLATEAU EST"
+ },
+ "SeniorF Belbeuf|2691132": {
+  "date": "2026-10-03",
+  "joue": true,
+  "score_dom": "23",
+  "score_ext": "23",
+  "domicile": "AS HARFLEUR",
+  "exterieur": "HBC BELBEUF PLATEAU EST"
+ },
+ "SeniorF Belbeuf|2691139": {
+  "date": "2026-10-10",
+  "joue": true,
+  "score_dom": "27",
+  "score_ext": "21",
+  "domicile": "HBC BELBEUF PLATEAU EST",
+  "exterieur": "AL BUQUET-ELBEUF HB"
+ },
+ "SeniorF Belbeuf|2691146": {
+  "date": "2026-11-07",
+  "joue": true,
+  "score_dom": "29",
+  "score_ext": "29",
+  "domicile": "ES AUMALE 2",
+  "exterieur": "HBC BELBEUF PLATEAU EST"
+ },
+ "SeniorF Belbeuf|2691160": {
+  "date": "2026-11-28",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "CJ DOUDEVILLE 1",
+  "exterieur": "HBC BELBEUF PLATEAU EST"
+ },
+ "SeniorF Belbeuf|2691166": {
+  "date": "2026-12-05",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "HBC BELBEUF PLATEAU EST",
+  "exterieur": "RC bolbec hb 2"
+ },
+ "SeniorF Belbeuf|2691171": {
+  "date": "2026-12-12",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "US STEPHANAISE HB",
+  "exterieur": "HBC BELBEUF PLATEAU EST"
+ },
+ "SeniorF Belbeuf|2691176": {
+  "date": "",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "E GRAVENCHON/LILLEBONNE 2",
+  "exterieur": "HBC BELBEUF PLATEAU EST"
+ },
+ "SeniorF Belbeuf|2691181": {
+  "date": "",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "ST LEONARD HB",
+  "exterieur": "HBC BELBEUF PLATEAU EST"
+ },
+ "SeniorF Belbeuf|2691186": {
+  "date": "",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "NEUFCHATEL HB",
+  "exterieur": "HBC BELBEUF PLATEAU EST"
+ },
+ "SeniorF Belbeuf|2691191": {
+  "date": "",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "HBC BELBEUF PLATEAU EST",
+  "exterieur": "GCO BIHOREL"
+ },
+ "SeniorF Belbeuf|2691198": {
+  "date": "",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "HBC BELBEUF PLATEAU EST",
+  "exterieur": "AS HARFLEUR"
+ },
+ "SeniorF Belbeuf|2691205": {
+  "date": "",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "AL BUQUET-ELBEUF HB",
+  "exterieur": "HBC BELBEUF PLATEAU EST"
+ },
+ "SeniorF Belbeuf|2691212": {
+  "date": "",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "HBC BELBEUF PLATEAU EST",
+  "exterieur": "ES AUMALE 2"
+ },
+ "SeniorF Belbeuf|2691219": {
+  "date": "",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "E NORD FEMININ 76 (ARQUES) 2",
+  "exterieur": "HBC BELBEUF PLATEAU EST"
+ },
+ "SeniorF Belbeuf|2691226": {
+  "date": "",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "HBC BELBEUF PLATEAU EST",
+  "exterieur": "CJ DOUDEVILLE 1"
+ },
+ "SeniorF Belbeuf|2691232": {
+  "date": "",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "RC bolbec hb 2",
+  "exterieur": "HBC BELBEUF PLATEAU EST"
+ },
+ "SeniorF Belbeuf|2691237": {
+  "date": "",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "HBC BELBEUF PLATEAU EST",
+  "exterieur": "US STEPHANAISE HB"
+ },
+ "SeniorF Belbeuf|2691242": {
+  "date": "",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "HBC BELBEUF PLATEAU EST",
+  "exterieur": "E GRAVENCHON/LILLEBONNE 2"
+ },
+ "SeniorF Belbeuf|2691247": {
+  "date": "",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "HBC BELBEUF PLATEAU EST",
+  "exterieur": "ST LEONARD HB"
+ },
+ "SeniorF Belbeuf|2766698": {
+  "date": "2026-11-21",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "US STEPHANAISE HB",
+  "exterieur": "HBC BELBEUF PLATEAU EST"
+ }
+}

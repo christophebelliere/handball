@@ -1,0 +1,6 @@
+{
+  "_comment": "Facteur d'agrandissement par logo, calcule depuis la boite englobante des pixels opaques (1 / max(largeur, hauteur) du contenu). 1 = le logo remplit deja sa tuile.",
+  "2024-08-21-58a11b0c-1d13-4285-a9f6-899cae5a14e2.webp": 1.48,
+  "2023-02-26-3f9113b4-9f9d-44b4-9063-e8ec9d1b2716.webp": 1.24,
+  "2021-07-12-0391a4cd-f5f8-4e97-83c6-5df417264f8a.webp": 1.13
+}

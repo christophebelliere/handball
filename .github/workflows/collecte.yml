@@ -1,0 +1,98 @@
+name: Collecte FFHandball
+
+# Toutes les 3 h. GitHub peut decaler le depart de quelques minutes aux heures
+# de pointe, sans consequence ici. Le cron GitHub n'utilise que UTC.
+on:
+  schedule:
+    - cron: "17 1,4,7,10,13,16,19,22 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: collecte
+  cancel-in-progress: false
+
+jobs:
+  collecte:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Collecte ffhandball.fr
+        run: python suivi_handball.py
+
+      - name: Controle de coherence
+        run: |
+          python - <<'PY'
+          import json, os, sys
+          d = json.load(open("matchs.json", encoding="utf-8"))
+          n = sum(len(e["matchs"]) for e in d["equipes"])
+          taille = os.path.getsize("index.html")
+          print(f"{n} matchs, page de {taille} octets, "
+                f"{len(d['equipes'])} equipes")
+          if n < 10 or taille < 20000 or len(d["equipes"]) != 3:
+              sys.exit("collecte incomplete : publication annulee, "
+                       "le site en ligne reste intact")
+          PY
+
+      - name: Construction de dist/
+        run: ./deploiement/construire.sh
+
+      - name: Envoi SFTP
+        env:
+          SFTP_HOST: ${{ secrets.IONOS_SFTP_HOST }}
+          SFTP_USER: ${{ secrets.IONOS_SFTP_USER }}
+          SFTP_PASS: ${{ secrets.IONOS_SFTP_PASS }}
+          SFTP_DIR: ${{ secrets.IONOS_SFTP_DIR }}
+        run: |
+          set -euo pipefail
+          if [ -z "${SFTP_HOST}" ] || [ -z "${SFTP_USER}" ] || [ -z "${SFTP_DIR}" ]; then
+            echo "Secrets SFTP manquants (IONOS_SFTP_HOST / _USER / _PASS / _DIR)." >&2
+            exit 1
+          fi
+
+          # Identifiants dans ~/.netrc : evite tout probleme de quoting avec
+          # un mot de passe contenant espaces, quotes ou caracteres speciaux.
+          python - <<'PY'
+          import os, pathlib
+          p = pathlib.Path.home() / ".netrc"
+          p.write_text(
+              "machine {}\nlogin {}\npassword {}\n".format(
+                  os.environ["SFTP_HOST"], os.environ["SFTP_USER"],
+                  os.environ["SFTP_PASS"])
+          )
+          p.chmod(0o600)
+          PY
+
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq lftp
+
+          lftp -c "
+            set sftp:auto-confirm yes;
+            set net:max-retries 2;
+            set net:timeout 20;
+            open sftp://${SFTP_HOST}:22;
+            mkdir -p ${SFTP_DIR};
+            mirror -R --parallel=4 --verbose dist ${SFTP_DIR};
+            ls ${SFTP_DIR}/index.html;
+            bye"
+
+      - name: Sauvegarde des donnees dans le depot
+        run: |
+          set -euo pipefail
+          git config user.name "collecte-ffhb"
+          git config user.email "collecte@users.noreply.github.com"
+          git add -A .suivi_handball_etat.json logos
+          if git diff --staged --quiet; then
+            echo "Aucun changement de donnees."
+            exit 0
+          fi
+          git commit -m "Etat de suivi $(date -u '+%Y-%m-%d %H:%M') UTC"
+          git push
