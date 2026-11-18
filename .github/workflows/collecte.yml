@@ -2,6 +2,7 @@ name: Collecte FFHandball
 
 # Toutes les 3 h. GitHub peut decaler le depart de quelques minutes aux heures
 # de pointe, sans consequence ici. Le cron GitHub n'utilise que UTC
+# (creees : 01:17, 04:17, 07:17, 10:17, 13:17, 16:17, 19:17, 22:17).
 # (22:17 UTC = 23:17 a Paris en hiver, 00:17 en ete).
 on:
   workflow_dispatch:
