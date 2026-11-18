@@ -69,6 +69,15 @@ git push -u origin main
 Le mot de passe peut contenir n'importe quel caractère : il est écrit dans un
 `~/.netrc` par le workflow, jamais interpolé dans une commande shell.
 
+Deux précautions prises par le workflow :
+
+- `IONOS_SFTP_DIR` est nettoyé des espaces et retours à la ligne parasites
+  (fréquents lors d'un copier-coller), et `/` seul est refusé — écrire à la
+  racine du compte FTP serait une erreur coûteuse.
+- **Le dossier cible doit déjà exister.** Il n'y a volontairement pas de
+  `mkdir -p` : si le chemin est faux, le job échoue avec un message explicite
+  plutôt que de créer un dossier fantôme que le serveur web ne sert pas.
+
 ### 3. Sous-domaine et certificat
 
 Dans l'espace client IONOS : `Domaines & SSL` → le domaine → créer le

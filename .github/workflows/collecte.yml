@@ -64,6 +64,27 @@ jobs:
             exit 1
           fi
 
+          # Un secret colle depuis un navigateur peut trainer un espace ou un
+          # retour a la ligne : on nettoie, sinon lftp cherche un dossier dont
+          # le nom finit par une espace.
+          DIR="$(printf '%s' "${SFTP_DIR}" | tr -d '\r\n' \
+                 | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's#/*$##')"
+          HOST="$(printf '%s' "${SFTP_HOST}" | tr -d '\r\n[:space:]')"
+
+          if [ -z "$DIR" ]; then
+            echo "IONOS_SFTP_DIR est vide." >&2
+            exit 1
+          fi
+          if [ "$DIR" = "/" ]; then
+            echo "IONOS_SFTP_DIR vaut / : refus d'ecrire a la racine du compte." >&2
+            exit 1
+          fi
+          if printf '%s' "$DIR" | grep -q '[[:space:]]'; then
+            echo "IONOS_SFTP_DIR contient une espace : '$DIR'" >&2
+            exit 1
+          fi
+          echo "Cible : $HOST:$DIR"
+
           # Identifiants dans ~/.netrc : evite tout probleme de quoting avec
           # un mot de passe contenant espaces, quotes ou caracteres speciaux.
           python - <<'PY'
@@ -71,7 +92,7 @@ jobs:
           p = pathlib.Path.home() / ".netrc"
           p.write_text(
               "machine {}\nlogin {}\npassword {}\n".format(
-                  os.environ["SFTP_HOST"], os.environ["SFTP_USER"],
+                  os.environ["SFTP_HOST"].strip(), os.environ["SFTP_USER"].strip(),
                   os.environ["SFTP_PASS"])
           )
           p.chmod(0o600)
@@ -80,15 +101,27 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq lftp
 
-          lftp -c "
+          # Le dossier cible doit exister : IONOS le cree avec le sous-domaine.
+          # On ne fait volontairement pas de "mkdir -p" : mieux vaut un echec
+          # explicite qu'un site publie dans un dossier fantome que personne
+          # ne consulte.
+          if ! lftp -c "
             set sftp:auto-confirm yes;
             set net:max-retries 2;
             set net:timeout 20;
-            open sftp://${SFTP_HOST}:22;
-            mkdir -p ${SFTP_DIR};
-            mirror -R --parallel=4 --verbose dist ${SFTP_DIR};
-            ls ${SFTP_DIR}/index.html;
-            bye"
+            set cmd:fail-exit yes;
+            open sftp://${HOST}:22;
+            cd ${DIR};
+            mirror -R --parallel=4 --verbose dist .;
+            ls index.html;
+            bye"; then
+            echo "" >&2
+            echo "Envoi SFTP en echec." >&2
+            echo "Verifier IONOS_SFTP_HOST, _USER, _PASS, et surtout IONOS_SFTP_DIR :" >&2
+            echo "ce dossier doit deja exister dans l'espace web (il est cree par" >&2
+            echo "IONOS en meme temps que le sous-domaine)." >&2
+            exit 1
+          fi
 
       - name: Sauvegarde des donnees dans le depot
         run: |
