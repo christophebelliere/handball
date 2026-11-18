@@ -112,24 +112,17 @@ Vérifier ensuite :
   `Content-Type: text/calendar`
 - l'URL du `.ics` s'abonne correctement dans Outlook
 
-### 5. Activer la collecte automatique
+### 5. Collecte automatique
 
-Le planificateur est **volontairement commenté** dans
-`.github/workflows/collecte.yml` tant que les 4 secrets SFTP n'existent pas :
-sinon le job échoue 8 fois par jour et les e-mails d'échec perdent tout sens.
-Une fois le premier envoi manuel réussi, décommenter dans le bloc `on:` :
+Le planificateur est **actif** : `.github/workflows/collecte.yml` déclenche une
+collecte toutes les 3 h (`17 1,4,7,10,13,16,19,22 * * *`, en UTC) et
+`workflow_dispatch` reste disponible pour un lancement manuel.
 
-```yaml
-on:
-  workflow_dispatch:
-  schedule:
-    - cron: "17 1,4,7,10,13,16,19,22 * * *"
-```
+Le site en ligne : **https://handball.belliere.fr** (le HTTP fonctionne
+immédiatement ; le certificat du sous-domaine est émis par IONOS avec un peu de
+retard, d'où le bloc `https` encore commenté dans `deploiement/htaccess`).
 
-puis pousser. Vérifier dans l'onglet `Actions` qu'une exécution apparaît bien
-après l'heure prévue (GitHub peut la décaler de quelques minutes).
-
-Penser aussi à `Settings` → `Actions` → `General` → **Workflow permissions** =
+Penser à `Settings` → `Actions` → `General` → **Workflow permissions** =
 *Read and write* : sans cela le commit de `.suivi_handball_etat.json` échoue en
 fin de workflow.
 
