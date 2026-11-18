@@ -27,3 +27,6 @@ La collecte tourne toutes les 3 h dans GitHub Actions
 (`.github/workflows/collecte.yml`) puis publie par SFTP sur l'hébergement IONOS.
 Si la collecte est incomplète (site FFHandball indisponible), rien n'est publié
 et la version en ligne reste intacte.
+
+Le planificateur est commenté tant que les secrets SFTP ne sont pas créés :
+en attendant, la collecte se lance à la main (`Actions` → `Run workflow`).

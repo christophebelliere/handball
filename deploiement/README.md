@@ -94,6 +94,27 @@ Vérifier ensuite :
   `Content-Type: text/calendar`
 - l'URL du `.ics` s'abonne correctement dans Outlook
 
+### 5. Activer la collecte automatique
+
+Le planificateur est **volontairement commenté** dans
+`.github/workflows/collecte.yml` tant que les 4 secrets SFTP n'existent pas :
+sinon le job échoue 8 fois par jour et les e-mails d'échec perdent tout sens.
+Une fois le premier envoi manuel réussi, décommenter dans le bloc `on:` :
+
+```yaml
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 1,4,7,10,13,16,19,22 * * *"
+```
+
+puis pousser. Vérifier dans l'onglet `Actions` qu'une exécution apparaît bien
+après l'heure prévue (GitHub peut la décaler de quelques minutes).
+
+Penser aussi à `Settings` → `Actions` → `General` → **Workflow permissions** =
+*Read and write* : sans cela le commit de `.suivi_handball_etat.json` échoue en
+fin de workflow.
+
 ## Garde-fous en place
 
 - **Collecte incomplète** (moins de 10 matchs, page anormalement petite, une

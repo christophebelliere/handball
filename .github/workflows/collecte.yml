@@ -1,11 +1,17 @@
 name: Collecte FFHandball
 
-# Toutes les 3 h. GitHub peut decaler le depart de quelques minutes aux heures
-# de pointe, sans consequence ici. Le cron GitHub n'utilise que UTC.
+# Toutes les 3 h une fois les secrets SFTP en place. GitHub peut decaler le
+# depart de quelques minutes aux heures de pointe, sans consequence ici.
+# Le cron GitHub n'utilise que UTC.
+#
+# Le planificateur est volontairement desactive tant que les 4 secrets
+# IONOS_SFTP_* n'existent pas : sinon le job echoue 8 fois par jour et les
+# e-mails d'echec finissent par etre ignores. Decommenter le bloc schedule
+# (et supprimer celui du declenchement manuel doublon) une fois le site publie.
 on:
-  schedule:
-    - cron: "17 1,4,7,10,13,16,19,22 * * *"
   workflow_dispatch:
+  # schedule:
+  #   - cron: "17 1,4,7,10,13,16,19,22 * * *"
 
 permissions:
   contents: write
