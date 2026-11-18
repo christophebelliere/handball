@@ -85,43 +85,75 @@ jobs:
           fi
           echo "Cible : $HOST:$DIR"
 
-          # Identifiants dans ~/.netrc : evite tout probleme de quoting avec
-          # un mot de passe contenant espaces, quotes ou caracteres speciaux.
-          python - <<'PY'
-          import os, pathlib
-          p = pathlib.Path.home() / ".netrc"
-          p.write_text(
-              "machine {}\nlogin {}\npassword {}\n".format(
-                  os.environ["SFTP_HOST"].strip(), os.environ["SFTP_USER"].strip(),
-                  os.environ["SFTP_PASS"])
-          )
-          p.chmod(0o600)
-          PY
+          # Envoi en Python (paramiko) plutot qu'en lftp : le module SFTP de
+          # lftp delegue l'authentification a "ssh", qui ne lit pas ~/.netrc et
+          # redemande donc un mot de passe qu'aucune saisie ne peut fournir en
+          # CI (erreur "Login failed: Password required"). Paramiko recoit le
+          # mot de passe par variable d'environnement, ne passe par aucun
+          # shell, et distingue nettement "mauvais identifiants" et "dossier
+          # inexistant".
+          python -m pip install --quiet --disable-pip-version-check paramiko
 
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq lftp
+          python - <<'PY'
+          import os, posixpath, sys
+          import paramiko
+
+          host = os.environ["SFTP_HOST"].strip()
+          user = os.environ["SFTP_USER"].strip()
+          secret = os.environ["SFTP_PASS"]
+          base = (os.environ["SFTP_DIR"].strip().rstrip("/")) or "/"
+
+          client = paramiko.SSHClient()
+          client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+          try:
+              client.connect(host, port=22, username=user, password=secret,
+                             timeout=30, banner_timeout=30, auth_timeout=30,
+                             look_for_keys=False, allow_agent=False)
+          except paramiko.AuthenticationException:
+              sys.exit("Authentification refusee par %s : verifier "
+                       "IONOS_SFTP_USER et IONOS_SFTP_PASS." % host)
+          except Exception as erreur:
+              sys.exit("Connexion a %s impossible : %s" % (host, erreur))
+          print("Connecte a %s" % host)
+
+          sftp = client.open_sftp()
 
           # Le dossier cible doit exister : IONOS le cree avec le sous-domaine.
-          # On ne fait volontairement pas de "mkdir -p" : mieux vaut un echec
-          # explicite qu'un site publie dans un dossier fantome que personne
-          # ne consulte.
-          if ! lftp -c "
-            set sftp:auto-confirm yes;
-            set net:max-retries 2;
-            set net:timeout 20;
-            set cmd:fail-exit yes;
-            open sftp://${HOST}:22;
-            cd ${DIR};
-            mirror -R --parallel=4 --verbose dist .;
-            ls index.html;
-            bye"; then
-            echo "" >&2
-            echo "Envoi SFTP en echec." >&2
-            echo "Verifier IONOS_SFTP_HOST, _USER, _PASS, et surtout IONOS_SFTP_DIR :" >&2
-            echo "ce dossier doit deja exister dans l'espace web (il est cree par" >&2
-            echo "IONOS en meme temps que le sous-domaine)." >&2
-            exit 1
-          fi
+          # On ne cree volontairement rien a ce niveau, pour qu'une erreur de
+          # chemin se voie tout de suite au lieu de publier dans un dossier
+          # fantome que le serveur web ne sert pas.
+          try:
+              sftp.stat(base)
+          except IOError:
+              sys.exit("Dossier %s introuvable sur %s : IONOS_SFTP_DIR doit "
+                       "designer un dossier existant (celui du sous-domaine)."
+                       % (base, host))
+
+          envoyes = 0
+          for dossier, _, fichiers in os.walk("dist"):
+              relatif = os.path.relpath(dossier, "dist")
+              cible = (base if relatif == "."
+                       else posixpath.join(base, relatif.replace(os.sep, "/")))
+              if relatif != ".":
+                  try:
+                      sftp.stat(cible)
+                  except IOError:
+                      sftp.mkdir(cible)
+              for nom in sorted(fichiers):
+                  sftp.put(os.path.join(dossier, nom),
+                           posixpath.join(cible, nom))
+                  envoyes += 1
+
+          taille = sftp.stat(posixpath.join(base, "index.html")).st_size
+          sftp.close()
+          client.close()
+
+          print("%d fichier(s) envoye(s) vers %s:%s" % (envoyes, host, base))
+          print("index.html distant : %d octets" % taille)
+          if taille < 20000:
+              sys.exit("index.html distant anormalement petit (%d octets)."
+                       % taille)
+          PY
 
       - name: Sauvegarde des donnees dans le depot
         run: |

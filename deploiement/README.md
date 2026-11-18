@@ -66,8 +66,10 @@ git push -u origin main
 | `IONOS_SFTP_PASS` | son mot de passe |
 | `IONOS_SFTP_DIR` | dossier du sous-domaine, par exemple `/handball.mondomaine.fr` |
 
-Le mot de passe peut contenir n'importe quel caractère : il est écrit dans un
-`~/.netrc` par le workflow, jamais interpolé dans une commande shell.
+Le mot de passe n'est jamais interpolé dans une commande shell : il est lu
+depuis la variable d'environnement par une bibliothèque SFTP Python
+(`paramiko`), qui gère elle-même l'authentification. Un mot de passe contenant
+espaces, guillemets ou `$` ne pose donc aucun problème.
 
 Deux précautions prises par le workflow :
 
@@ -91,9 +93,16 @@ forcer la redirection.
 
 ### 4. Premier envoi
 
-`Actions` → `Collecte FFHandball` → `Run workflow`. Le journal doit finir sur
-`Transfer complete` puis `Aucun changement de données` ou un commit
-`Données … UTC`.
+`Actions` → `Collecte FFHandball` → `Run workflow`. L'étape d'envoi doit
+afficher :
+
+```
+Connecte a homeXXXXXXX.1and1-data.host
+24 fichier(s) envoye(s) vers homeXXXXXXX.1and1-data.host:/handball
+index.html distant : 7xxxx octets
+```
+
+puis `Aucun changement de données` ou un commit `Etat de suivi … UTC`.
 
 Vérifier ensuite :
 
