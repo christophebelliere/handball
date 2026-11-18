@@ -12,7 +12,7 @@ import hashlib
 import json
 import os
 import unicodedata
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # Facteurs de cadrage par logo (voir logos/cadrage.json) : certains fichiers
 # FFHB contiennent de grandes marges transparentes, le logo parait alors minuscule.
@@ -679,7 +679,12 @@ def rendre_page(data):
                 + "".join(bloc_equipe(eq, False) for eq in equipes))
 
     try:
-        maj = datetime.fromisoformat(data["genere_le"]).strftime("%d/%m/%Y a %H:%M")
+        # genere_le est ecrit en heure du runner (UTC dans GitHub Actions) ;
+        # on l'affiche explicitement en UTC pour eviter toute ambiguite.
+        moment = datetime.fromisoformat(data["genere_le"])
+        if moment.tzinfo is not None:
+            moment = moment.astimezone(timezone.utc).replace(tzinfo=None)
+        maj = moment.strftime("%d/%m/%Y %H:%M UTC")
     except Exception:
         maj = data.get("genere_le", "")
 
