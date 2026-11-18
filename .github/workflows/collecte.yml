@@ -65,8 +65,8 @@ jobs:
           fi
 
           # Un secret colle depuis un navigateur peut trainer un espace ou un
-          # retour a la ligne : on nettoie, sinon lftp cherche un dossier dont
-          # le nom finit par une espace.
+          # retour a la ligne : on nettoie, sinon le dossier cherche se termine
+          # par une espace et n'existe pas.
           DIR="$(printf '%s' "${SFTP_DIR}" | tr -d '\r\n' \
                  | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//' -e 's#/*$##')"
           HOST="$(printf '%s' "${SFTP_HOST}" | tr -d '\r\n[:space:]')"
