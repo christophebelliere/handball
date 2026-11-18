@@ -1,0 +1,53 @@
+name: Battement (test planificateur)
+
+# Workflow TEMPORAIRE de diagnostic. Il ne collecte rien : il ecrit un
+# horodatage dans /battement.txt sur le site, ce qui permet de verifier depuis
+# l'exterieur si les executions planifiees ont lieu. A supprimer une fois le
+# diagnostic termine.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  battement:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ecrit un horodatage sur le site
+        env:
+          SFTP_HOST: ${{ secrets.IONOS_SFTP_HOST }}
+          SFTP_USER: ${{ secrets.IONOS_SFTP_USER }}
+          SFTP_PASS: ${{ secrets.IONOS_SFTP_PASS }}
+          SFTP_DIR: ${{ secrets.IONOS_SFTP_DIR }}
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet --disable-pip-version-check paramiko
+          python - <<'PY'
+          import os, posixpath
+          from datetime import datetime, timezone
+          import paramiko
+
+          host = os.environ["SFTP_HOST"].strip()
+          base = (os.environ["SFTP_DIR"].strip().rstrip("/")) or "/"
+
+          client = paramiko.SSHClient()
+          client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+          client.connect(host, port=22,
+                         username=os.environ["SFTP_USER"].strip(),
+                         password=os.environ["SFTP_PASS"],
+                         timeout=30, banner_timeout=30, auth_timeout=30,
+                         look_for_keys=False, allow_agent=False)
+          sftp = client.open_sftp()
+
+          moment = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+          contenu = "battement %s\n" % moment
+          with sftp.open(posixpath.join(base, "battement.txt"), "w") as f:
+              f.write(contenu)
+          sftp.close()
+          client.close()
+          print(contenu.strip())
+          PY
