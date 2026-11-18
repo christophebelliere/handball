@@ -51,3 +51,4 @@ jobs:
           client.close()
           print(contenu.strip())
           PY
+# acteur : christophebelliere (identite du commit)
