@@ -47,7 +47,12 @@ jobs:
       - name: Construction de dist/
         run: bash deploiement/construire.sh
 
+      # Pendant la bascule, IONOS n'est plus qu'un secours : un echec ici (par
+      # exemple parce que le sous-domaine a ete detache de l'hebergement pour
+      # laisser la place au CNAME) ne doit pas empecher le deploiement Pages,
+      # qui vient apres. A supprimer avec l'etape elle-meme.
       - name: Envoi SFTP
+        continue-on-error: true
         env:
           SFTP_HOST: ${{ secrets.IONOS_SFTP_HOST }}
           SFTP_USER: ${{ secrets.IONOS_SFTP_USER }}
