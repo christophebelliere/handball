@@ -16,9 +16,9 @@ API="https://api.cloudflare.com/client/v4"
 # guillemets simples imbriques dans ${VAR:?message}.
 : "${CF_TOKEN:?CF_TOKEN manquant - lancer export CF_TOKEN=<jeton>}"
 
-# Un jeton Cloudflare fait 40 caracteres, sans prefixe. Les valeurs ci-dessous
-# sont des exemples recopies tels quels : autant le dire ici plutot que de
-# laisser l API repondre 6003.
+# Cloudflare a deux formats : l ancien (40 caracteres sans prefixe) et le
+# nouveau, prefixe et scannable (cfut_ pour un jeton utilisateur, cfat_ pour un
+# jeton de compte, 53 caracteres au total). Les deux sont acceptes ici.
 CF_TOKEN="${CF_TOKEN//[[:space:]]/}"
 case "$CF_TOKEN" in
   *ton_jeton*|*votre_jeton*|*xxx*|v1.0-*)
@@ -26,9 +26,9 @@ case "$CF_TOKEN" in
     echo "Recopie le vrai jeton depuis dash.cloudflare.com/profile/api-tokens." >&2
     exit 1 ;;
 esac
-if [ "${#CF_TOKEN}" -ne 40 ]; then
-  echo "CF_TOKEN fait ${#CF_TOKEN} caracteres, un jeton Cloudflare en fait 40." >&2
-  echo "Valeur recue : ${CF_TOKEN:0:6}... (debut seulement, jamais le jeton entier)" >&2
+if ! [[ "$CF_TOKEN" =~ ^cf(k|ut|at)_[A-Za-z0-9_-]{40,}$ || "$CF_TOKEN" =~ ^[A-Za-z0-9_-]{40}$ ]]; then
+  echo "CF_TOKEN n a pas la forme d un jeton Cloudflare (${#CF_TOKEN} caracteres)." >&2
+  echo "Attendu : cfut_... (53) ou 40 caracteres sans prefixe." >&2
   exit 1
 fi
 
@@ -45,15 +45,31 @@ api() {  # methode, chemin, [corps JSON]
   fi
 }
 
-# ------------------------------------------------------------ 1. le compte
-if [ -z "${CF_ACCOUNT:-}" ]; then
-  echo "Recherche du compte..."
-  CF_ACCOUNT=$(api GET /accounts | python3 -c '
+# ------------------------------------------------------ 1. validite du jeton
+# Cet endpoint ne demande aucune permission : il repond « active » pour tout
+# jeton vivant, ce qui distingue tout de suite « jeton mort » de « permission
+# Pages manquante ».
+printf 'Jeton    : '
+api GET /user/tokens/verify | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
 if not d.get("success"):
     e = (d.get("errors") or [{}])[0]
-    sys.exit("Jeton refuse (%s) : %s" % (e.get("code"), e.get("message")))
+    sys.exit("refuse (%s) : %s" % (e.get("code"), e.get("message")))
+print("valide, statut %s" % (d.get("result") or {}).get("status", "inconnu"))
+'
+
+# ------------------------------------------------------------ 2. le compte
+if [ -z "${CF_ACCOUNT:-}" ]; then
+  echo "Recherche du compte..."
+  reponse=$(api GET /accounts)
+  if ! CF_ACCOUNT=$(printf '%s' "$reponse" | python3 -c '
+import json, sys
+d = json.load(sys.stdin)
+if not d.get("success"):
+    e = (d.get("errors") or [{}])[0]
+    sys.exit("Liste des comptes refusee (%s) : %s"
+             % (e.get("code"), e.get("message")))
 comptes = d.get("result") or []
 if len(comptes) == 1:
     print(comptes[0]["id"])
@@ -65,12 +81,18 @@ else:
         print("  %s  %s" % (c["id"], c["name"]), file=sys.stderr)
     print("Relance avec : export CF_ACCOUNT=<id>", file=sys.stderr)
     sys.exit(2)
-')
+'); then
+    echo
+    echo "Le jeton fonctionne, mais l identifiant de compte n a pas pu etre lu." >&2
+    echo "Prends-le dans l URL du tableau de bord (dash.cloudflare.com/<id>) puis :" >&2
+    echo "  export CF_ACCOUNT=<les 32 caracteres>" >&2
+    exit 1
+  fi
 fi
 
 echo "Compte   : $CF_ACCOUNT"
 
-# ------------------------------------------------ 2. le projet existe-t-il ?
+# ------------------------------------------------ 3. le projet existe-t-il ?
 existant=$(api GET "/accounts/$CF_ACCOUNT/pages/projects/$NOM" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
@@ -94,7 +116,7 @@ print("           cree, branche de production : %s" % r.get("production_branch")
 '
 fi
 
-# ------------------------------------------------------- 3. l'adresse finale
+# ------------------------------------------------------- 4. l'adresse finale
 api GET "/accounts/$CF_ACCOUNT/pages/projects/$NOM" | python3 -c '
 import json, sys
 d = json.load(sys.stdin)
