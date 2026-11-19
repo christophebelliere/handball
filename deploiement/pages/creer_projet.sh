@@ -117,8 +117,8 @@ print("           cree, branche de production : %s" % r.get("production_branch")
 fi
 
 # ------------------------------------------------------- 4. l'adresse finale
-api GET "/accounts/$CF_ACCOUNT/pages/projects/$NOM" | python3 -c '
-import json, sys
+api GET "/accounts/$CF_ACCOUNT/pages/projects/$NOM" | CF_ACCOUNT="$CF_ACCOUNT" python3 -c '
+import json, os, sys
 d = json.load(sys.stdin)
 if not d.get("success"):
     e = (d.get("errors") or [{}])[0]
@@ -126,7 +126,7 @@ if not d.get("success"):
              % (e.get("code"), e.get("message")))
 r = d["result"]
 sous = r.get("subdomain") or (r.get("name", "") + ".pages.dev")
-compte = r.get("account_id") or "(identifiant affiche plus haut)"
+compte = r.get("account_id") or os.environ["CF_ACCOUNT"]
 print()
 print("Adresse  : https://%s" % sous)
 print("Depots   : %s" % ("aucun pour le moment, le workflow remplira le site"
@@ -134,6 +134,6 @@ print("Depots   : %s" % ("aucun pour le moment, le workflow remplira le site"
                          else "au moins un deja en ligne"))
 print()
 print("Secrets a renseigner sur GitHub :")
-print("  CLOUDFLARE_API_TOKEN   = le jeton v1.0-... (ne pas recopier ici)")
+print("  CLOUDFLARE_API_TOKEN   = le jeton cfut_... (ne pas recopier ici)")
 print("  CLOUDFLARE_ACCOUNT_ID  = %s" % compte)
 '
