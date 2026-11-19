@@ -14,7 +14,23 @@ API="https://api.cloudflare.com/client/v4"
 
 # Pas d apostrophe dans ce message : bash 3.2 (celui de macOS) se perd sur les
 # guillemets simples imbriques dans ${VAR:?message}.
-: "${CF_TOKEN:?CF_TOKEN manquant - lancer export CF_TOKEN=v1.0-...}"
+: "${CF_TOKEN:?CF_TOKEN manquant - lancer export CF_TOKEN=<jeton>}"
+
+# Un jeton Cloudflare fait 40 caracteres, sans prefixe. Les valeurs ci-dessous
+# sont des exemples recopies tels quels : autant le dire ici plutot que de
+# laisser l API repondre 6003.
+CF_TOKEN="${CF_TOKEN//[[:space:]]/}"
+case "$CF_TOKEN" in
+  *ton_jeton*|*votre_jeton*|*xxx*|v1.0-*)
+    echo "CF_TOKEN contient encore un texte d exemple (${CF_TOKEN:0:12}...)." >&2
+    echo "Recopie le vrai jeton depuis dash.cloudflare.com/profile/api-tokens." >&2
+    exit 1 ;;
+esac
+if [ "${#CF_TOKEN}" -ne 40 ]; then
+  echo "CF_TOKEN fait ${#CF_TOKEN} caracteres, un jeton Cloudflare en fait 40." >&2
+  echo "Valeur recue : ${CF_TOKEN:0:6}... (debut seulement, jamais le jeton entier)" >&2
+  exit 1
+fi
 
 api() {  # methode, chemin, [corps JSON]
   local methode="$1" chemin="$2" corps="${3:-}"
