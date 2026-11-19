@@ -778,7 +778,10 @@ def exporter_ics(matchs):
         ]
     lignes.append("END:VCALENDAR")
 
-    with open(FICHIER_ICS, "w", encoding="utf-8", newline="\r\n") as f:
+    # newline="" : sans cela, Python traduit chaque "\n" en "\r\n" et les
+    # lignes finissent en "\r\r\n", ce que certains clients de calendrier
+    # refusent (RFC 5545 exige exactement CRLF).
+    with open(FICHIER_ICS, "w", encoding="utf-8", newline="") as f:
         f.write("\r\n".join(lignes) + "\r\n")
     print(f"ICS  : {FICHIER_ICS} ({n} evenement(s) date(s))")
     return n

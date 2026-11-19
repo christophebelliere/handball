@@ -18,6 +18,10 @@
 #
 # Les donnees sont regenerees toutes les 3 h : aucun cache intermediaire, sinon
 # un client peut relire une version vieille de plusieurs jours.
+#
+# Le HTML n a pas besoin de regle : Pages le sert deja en
+# "public, max-age=0, must-revalidate", donc le navigateur revalide a chaque
+# visite. Toute valeur Cache-Control demandee pour une page HTML y est ignoree.
 /calendrier.ics
   Content-Type: text/calendar; charset=utf-8
   Cache-Control: no-store, must-revalidate
@@ -28,9 +32,6 @@
 
 /suivi_handball.csv
   Content-Type: text/csv; charset=utf-8
-  Cache-Control: no-store, must-revalidate
-
-/index.html
   Cache-Control: no-store, must-revalidate
 
 # Les logos portent l'empreinte du fichier FFHB : leur contenu ne change jamais.
