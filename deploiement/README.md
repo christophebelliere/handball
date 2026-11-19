@@ -4,7 +4,7 @@ Le site est publié à **deux endroits** pendant la bascule :
 
 | Destination | Adresse | Rôle |
 |---|---|---|
-| Cloudflare Pages | `https://handball.pages.dev`, puis `https://handball.belliere.fr` | **cible** : HTTPS émis et renouvelé automatiquement |
+| Cloudflare Pages | `https://handball-belliere.pages.dev`, puis `https://handball.belliere.fr` | **cible** : HTTPS émis et renouvelé automatiquement |
 | IONOS (SFTP) | `http://handball.belliere.fr` | secours, retiré après validation |
 
 IONOS reste le **registrar** et la **zone DNS** : on n'y ajoute qu'un
@@ -62,18 +62,25 @@ l'offre gratuite.
 ### 1. Projet Pages
 
 Tableau de bord → `Workers & Pages` → `Créer` → `Pages` → **Upload assets**.
-Nom du projet : **`handball`** — il doit correspondre au `--project-name` du
-workflow. À l'écran suivant, ne rien téléverser : le premier envoi automatique
-remplira le site.
+Nom du projet : **`handball-belliere`** — il doit correspondre au
+`--project-name` du workflow. Le nom détermine l'adresse publique
+`<projet>.pages.dev`, et ces adresses sont uniques au monde : `handball` était
+déjà pris par un autre compte Cloudflare, d'où le suffixe.
 
 Équivalent en ligne de commande :
 
 ```bash
-npx wrangler@4 pages project create handball --production-branch=main
+npx wrangler@4 pages project create handball-belliere --production-branch=main
 ```
 
-Si `handball.pages.dev` est déjà pris par quelqu'un d'autre, choisir un autre
-nom, puis adapter `--project-name` dans le workflow **et** la cible du CNAME.
+> **Ne pas confondre avec Workers.** Le même écran propose « Workers », qui
+> déploie sur `<nom>.<compte>.workers.dev`. Un Worker ne peut pas recevoir un
+> CNAME venu d'un DNS externe : ses domaines personnalisés exigent que la zone
+> soit chez Cloudflare. C'est bien **Pages** qu'il faut ici, parce que Pages
+> accepte un sous-domaine rattaché par simple CNAME.
+
+Si `handball-belliere.pages.dev` est lui aussi pris, choisir un autre nom, puis
+adapter `--project-name` dans le workflow **et** la cible du CNAME.
 
 ### 2. Jeton d'API
 
@@ -101,15 +108,15 @@ nom, puis adapter `--project-name` dans le workflow **et** la cible du CNAME.
 ligne du type :
 
 ```
-✨ Deployment complete! Take a peek over at https://handball.pages.dev
+✨ Deployment complete! Take a peek over at https://handball-belliere.pages.dev
 ```
 
 Le site est alors consultable **en HTTPS**, sans avoir touché au DNS. C'est le
 moment de tout vérifier :
 
 ```bash
-./verifier_publication.sh https://handball.pages.dev
-curl -sI https://handball.pages.dev/calendrier.ics | grep -i content-type
+./verifier_publication.sh https://handball-belliere.pages.dev
+curl -sI https://handball-belliere.pages.dev/calendrier.ics | grep -i content-type
 ```
 
 Attendu : `content-type: text/calendar; charset=utf-8`.
@@ -127,7 +134,7 @@ domaine :
 
 | Type | Nom | Valeur | TTL |
 |---|---|---|---|
-| `CNAME` | `handball` | `handball.pages.dev` | par défaut |
+| `CNAME` | `handball` | `handball-belliere.pages.dev` | par défaut |
 
 Le statut passe à **Active** en quelques minutes et Cloudflare émet le
 certificat de lui-même. Rien à installer, rien à renouveler.

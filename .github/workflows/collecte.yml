@@ -186,7 +186,7 @@ jobs:
           # wrangler est epingle sur la version 4 : une montee de version
           # majeure peut renommer des options, on ne veut pas la subir.
           npx --yes wrangler@4 pages deploy dist \
-            --project-name=handball \
+            --project-name=handball-belliere \
             --branch=main \
             --commit-dirty=true
 
