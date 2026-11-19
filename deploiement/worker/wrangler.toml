@@ -1,0 +1,25 @@
+# Worker « declencheur » : appelle GitHub Actions a heure fixe.
+#
+# Deploiement (le workflow le fait a chaque collecte) :
+#   npx wrangler@4 deploy --config deploiement/worker/wrangler.toml
+#
+# Secrets a creer une seule fois dans le tableau de bord, Worker -> Settings ->
+# Variables and secrets :
+#   GITHUB_TOKEN    jeton fin d acces, Actions: Read and write sur handball
+#   JETON_MANUEL    facultatif, protege GET /declencher
+
+name = "declencheur"
+main = "declencheur.js"
+compatibility_date = "2026-11-01"
+
+# Le Worker n a pas besoin de domaine : le cron n appelle pas d URL.
+workers_dev = true
+
+[observability]
+enabled = true
+
+# Decale de 25 min par rapport au cron GitHub (:17). Les deux existent : GitHub
+# reste en secours, et le garde-fou de fraicheur du workflow fait sauter le
+# second declenchement quand les donnees en ligne ont moins de 2 h.
+[triggers]
+crons = ["42 1,4,7,10,13,16,19,22 * * *"]

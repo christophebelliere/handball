@@ -1,11 +1,21 @@
 name: Collecte FFHandball
 
-# Toutes les 3 h. GitHub peut decaler le depart de quelques minutes aux heures
-# de pointe, sans consequence ici. Le cron GitHub n'utilise que UTC
-# (creees : 01:17, 04:17, 07:17, 10:17, 13:17, 16:17, 19:17, 22:17).
-# (22:17 UTC = 23:17 a Paris en hiver, 00:17 en ete).
+# Toutes les 3 h, par deux planificateurs independants :
+#
+#   01:17 UTC  cron GitHub            -> 03:17 a Paris en hiver
+#   01:42 UTC  Worker « declencheur » -> 03:42 a Paris en hiver
+#
+# GitHub decale ou oublie parfois ses declenchements aux heures de pointe ; le
+# Worker Cloudflare, lui, part a l heure dite. Les deux existent volontairement :
+# une collecte a moins de 2 h fait sauter la suivante (job « fraicheur »), donc
+# le doublon ne coute rien et le trou de GitHub est comble.
 on:
   workflow_dispatch:
+    inputs:
+      forcer:
+        description: "Collecter meme si les donnees en ligne ont moins de 2 h"
+        type: boolean
+        default: false
   schedule:
     - cron: "17 1,4,7,10,13,16,19,22 * * *"
 
@@ -17,7 +27,63 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # --------------------------------------------------------------- fraicheur
+  # Un declenchement en double est sans effet : si le site publie des donnees
+  # recentes, on s arrete ici, avant toute collecte. En cas de doute (site
+  # injoignable), on collecte : mieux vaut un run de trop qu une page figee.
+  fraicheur:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      collecter: ${{ steps.verif.outputs.collecter }}
+    steps:
+      - name: Age des donnees en ligne
+        id: verif
+        env:
+          SEUIL_HEURES: "2"
+          FORCER: ${{ inputs.forcer }}
+          SITE: https://handball.belliere.fr
+        run: |
+          python3 - <<'PY'
+          import json, os, sys, urllib.request
+          from datetime import datetime, timezone
+
+          seuil = float(os.environ.get("SEUIL_HEURES", "2"))
+          forcer = (os.environ.get("FORCER") or "false").lower() == "true"
+          site = os.environ["SITE"]
+
+          def decider(collecter, motif):
+              print(motif)
+              with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as f:
+                  f.write("collecter=%s\n" % ("true" if collecter else "false"))
+
+          if forcer:
+              decider(True, "collecte forcee")
+              sys.exit(0)
+
+          try:
+              with urllib.request.urlopen(site + "/matchs.json", timeout=20) as r:
+                  genere = json.load(r)["genere_le"]
+              t = datetime.fromisoformat(genere)
+              if t.tzinfo is None:
+                  t = t.replace(tzinfo=timezone.utc)
+              age = (datetime.now(timezone.utc) - t).total_seconds() / 3600
+          except Exception as erreur:
+              decider(True, "site illisible (%s) : on collecte" % erreur)
+              sys.exit(0)
+
+          if age < seuil:
+              decider(False, "donnees en ligne vieilles de %.1f h (< %.0f h) : "
+                             "collecte inutile" % (age, seuil))
+          else:
+              decider(True, "donnees en ligne vieilles de %.1f h (>= %.0f h)"
+                            % (age, seuil))
+          PY
+
+  # ---------------------------------------------------------------- collecte
   collecte:
+    needs: fraicheur
+    if: needs.fraicheur.outputs.collecter == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -82,4 +148,23 @@ jobs:
           fi
           git commit -m "Etat de suivi $(date -u '+%Y-%m-%d %H:%M') UTC"
           git push
+
+      # ------------------------------------------------- declencheur (Worker)
+      # Redeploye a chaque collecte : le cron Cloudflare reste ainsi celui du
+      # depot, jamais une version oubliee dans le tableau de bord. Place en
+      # dernier : un echec ici ne prive de rien, la publication et la sauvegarde
+      # de l etat sont deja faites.
+      - name: Deploiement du declencheur
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          if ! npx --yes wrangler@4 deploy --config deploiement/worker/wrangler.toml; then
+            echo "Deploiement du Worker refuse." >&2
+            echo "Le jeton Cloudflare doit porter la permission" >&2
+            echo "  Account > Workers Scripts > Edit" >&2
+            echo "en plus de Cloudflare Pages > Edit." >&2
+            exit 1
+          fi
 # acteur : christophebelliere (identite du commit)

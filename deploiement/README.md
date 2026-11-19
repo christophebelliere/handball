@@ -50,6 +50,45 @@ met à jour quand même.
 Coût : environ 1 min 30 par exécution, 8 exécutions par jour. Le dépôt est
 public, donc les minutes Actions sont illimitées.
 
+## Planification
+
+Deux déclencheurs indépendants, à 25 minutes d'écart :
+
+| Heure UTC | Déclencheur | Fiabilité |
+|---|---|---|
+| `01:17`, `04:17`, … | `schedule` de GitHub Actions | irrégulière : des exécutions sautent sans prévenir |
+| `01:42`, `04:42`, … | Worker Cloudflare `declencheur` | à l'heure dite |
+
+Le Worker ne collecte rien : son `scheduled()` fait un seul appel à l'API
+GitHub (`workflow_dispatch`) et s'arrête. Ce qui suit reste entièrement dans
+Actions.
+
+Le doublon est neutralisé par le job **`fraicheur`**, exécuté en premier : si
+`matchs.json` en ligne a moins de **2 h**, le workflow s'arrête avant toute
+collecte. Conséquence : le cron GitHub peut rester en secours, et un
+déclenchement manuel accidentel ne relance rien. En cas de doute (site
+injoignable), on collecte — un run de trop vaut mieux qu'une page figée.
+
+Pour forcer une collecte malgré tout : `Run workflow` → cocher **forcer**.
+
+### Secrets du Worker
+
+Une seule fois, dans `Workers & Pages` → `declencheur` → `Settings` →
+`Variables and secrets` :
+
+| Nom | Contenu |
+|---|---|
+| `GITHUB_TOKEN` | jeton GitHub **fine-grained**, dépôt `handball` uniquement, permission `Actions: Read and write`, expiration 1 an |
+| `JETON_MANUEL` | facultatif, chaîne aléatoire protégeant `GET /declencher` |
+
+Sans `GITHUB_TOKEN`, le cron tourne mais ne déclenche rien (visible dans
+`Logs` du Worker). Sans `JETON_MANUEL`, le déclenchement manuel par URL reste
+fermé : fermé par défaut plutôt qu'ouvert par accident.
+
+Le jeton GitHub expire au bout d'un an : noter la date, sinon le cron cesse
+silencieusement de fonctionner à l'échéance.
+
+
 ## Mise en route
 
 ### 1. Projet Pages
@@ -80,9 +119,13 @@ export CF_TOKEN='cfut_...'
 | Champ | Valeur |
 |---|---|
 | Permissions | `Account` → **Cloudflare Pages** → **Edit** |
+| Permissions | `Account` → **Workers Scripts** → **Edit** (déploiement du déclencheur) |
 | Account Resources | ton compte |
 | Zone Resources | laisser vide — le sous-domaine passe par un CNAME externe |
 | TTL | sans expiration, ou 1 an |
+
+La seconde permission s'ajoute en cliquant **+ Add more** sous le premier bloc
+de permissions. La valeur du jeton ne change pas : inutile de le régénérer.
 
 Depuis 2026 les jetons sont préfixés : `cfut_` (utilisateur) ou `cfat_` (compte),
 53 caractères. Les anciens jetons de 40 caractères fonctionnent toujours.
@@ -124,6 +167,10 @@ Si la zone contient des enregistrements **CAA**, ils doivent autoriser
 ✨ Deployment complete! Take a peek over at https://handball-belliere.pages.dev
 ```
 
+Le même run déploie le Worker `declencheur`. Son secret `GITHUB_TOKEN` se crée
+**après** ce premier déploiement (voir *Planification*) : d'ici là, le cron
+tourne à vide, sans conséquence.
+
 ## Vérifier
 
 ```bash
@@ -151,6 +198,9 @@ echo | openssl s_client -connect 188.114.96.2:443 \
 | `tlsv1 alert internal error` en local | cache DNS local pointant encore l'ancien hébergeur | `sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder` |
 | `*.pages.dev` inaccessible depuis le bureau | filtrage Cisco Umbrella | tester en 4G / sur téléphone |
 | Secrets « manquants » | nom mal orthographié | recréer avec le nom exact |
+| Cron Cloudflare sans effet | `GITHUB_TOKEN` absent ou expiré dans le Worker | `Workers & Pages` → `declencheur` → `Logs` |
+| Workflow refusé au lancement | données en ligne récentes (< 2 h) | c'est le garde-fou ; cocher **forcer** |
+| Déploiement du Worker refusé | jeton sans `Workers Scripts: Edit` | compléter le jeton, valeur inchangée |
 
 ## Pourquoi Cloudflare et pas IONOS
 
@@ -185,3 +235,5 @@ CNAME obtient son propre certificat, renouvelé sans intervention.
 | `construire.sh` | fabrique `dist/` : uniquement les fichiers publics + `_headers` |
 | `pages/_headers` | en-têtes HTTP servis par Pages, copié dans `dist/` |
 | `pages/creer_projet.sh` | crée le projet Pages par l'API et rappelle les secrets à renseigner |
+| `worker/declencheur.js` | Worker appelé par le cron Cloudflare, déclenche le workflow |
+| `worker/wrangler.toml` | nom, horaires du cron, déploiement du Worker |
