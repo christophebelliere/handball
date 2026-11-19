@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
-# Construit dist/ : uniquement les fichiers a publier, plus le .htaccess.
-# Aucun script, aucun etat de suivi, aucun cache n'y entre.
+# Construit dist/ : uniquement les fichiers a publier, plus le _headers de
+# Cloudflare Pages. Aucun script, aucun etat de suivi, aucun cache n'y entre.
+#
+# dist/ est pret a etre deploye tel quel sur Pages. Pour un envoi SFTP vers
+# IONOS, le workflow y ajoute le .htaccess juste avant l'envoi : c'est le seul
+# fichier dont IONOS a besoin et dont Pages ne veut pas.
 set -euo pipefail
 
 ICI="$(cd "$(dirname "$0")/.." && pwd)"
@@ -21,6 +25,6 @@ cp -R logos "$DIST/logos"
 # cadrage.json sert au rendu, pas a l'affichage : il reste cote code.
 rm -f "$DIST/logos/cadrage.json"
 
-cp deploiement/htaccess "$DIST/.htaccess"
+cp deploiement/pages/_headers "$DIST/_headers"
 
 echo "dist/ : $(du -sh "$DIST" | cut -f1), $(find "$DIST" -type f | wc -l | tr -d ' ') fichiers"

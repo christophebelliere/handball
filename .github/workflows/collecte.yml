@@ -55,6 +55,11 @@ jobs:
           SFTP_DIR: ${{ secrets.IONOS_SFTP_DIR }}
         run: |
           set -euo pipefail
+
+          # dist/ est prepare pour Cloudflare Pages ; Apache a besoin de son
+          # .htaccess, que construire.sh n'y met volontairement pas.
+          cp deploiement/htaccess dist/.htaccess
+
           if [ -z "${SFTP_HOST}" ] || [ -z "${SFTP_USER}" ] || [ -z "${SFTP_DIR}" ]; then
             echo "Secrets SFTP manquants (IONOS_SFTP_HOST / _USER / _PASS / _DIR)." >&2
             exit 1
@@ -136,6 +141,8 @@ jobs:
                   except IOError:
                       sftp.mkdir(cible)
               for nom in sorted(fichiers):
+                  if nom == "_headers":
+                      continue  # en-tetes propres a Cloudflare Pages
                   sftp.put(os.path.join(dossier, nom),
                            posixpath.join(cible, nom))
                   envoyes += 1
@@ -157,6 +164,31 @@ jobs:
               sys.exit("index.html distant anormalement petit (%d octets)."
                        % taille)
           PY
+
+      # --------------------------------------------------- Cloudflare Pages
+      # Transition : IONOS reste la reference tant que le CNAME n'a pas bascule.
+      # continue-on-error evite qu'un incident chez Pages bloque la publication
+      # IONOS et la sauvegarde de l'etat. A retirer apres la bascule DNS.
+      - name: Deploiement Cloudflare Pages
+        continue-on-error: true
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ] || [ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]; then
+            echo "Secrets Cloudflare manquants :" >&2
+            echo "  CLOUDFLARE_API_TOKEN  (permission « Cloudflare Pages : Edit »)" >&2
+            echo "  CLOUDFLARE_ACCOUNT_ID (visible dans l'URL du tableau de bord)" >&2
+            exit 1
+          fi
+
+          # wrangler est epingle sur la version 4 : une montee de version
+          # majeure peut renommer des options, on ne veut pas la subir.
+          npx --yes wrangler@4 pages deploy dist \
+            --project-name=handball \
+            --branch=main \
+            --commit-dirty=true
 
       - name: Sauvegarde des donnees dans le depot
         run: |

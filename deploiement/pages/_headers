@@ -1,0 +1,38 @@
+# En-tetes HTTP servis par Cloudflare Pages.
+#
+# Ce fichier remplace le .htaccess d'Apache : Pages ne lit pas les fichiers de
+# configuration de serveur, il applique les regles ci-dessous au moment de
+# servir chaque fichier. Il doit se trouver a la racine des fichiers publies
+# (construire.sh le copie dans dist/).
+#
+# Syntaxe : un chemin, puis ses en-tetes indentes de deux espaces. Un bloc
+# general (/*) complete les blocs plus specifiques.
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# Sans ces lignes, plusieurs clients de calendrier recoivent le .ics en
+# application/octet-stream et refusent de s'y abonner ("ce fichier n'est pas
+# un calendrier"). Meme piege que sur Apache, autre syntaxe.
+#
+# Les donnees sont regenerees toutes les 3 h : aucun cache intermediaire, sinon
+# un client peut relire une version vieille de plusieurs jours.
+/calendrier.ics
+  Content-Type: text/calendar; charset=utf-8
+  Cache-Control: no-store, must-revalidate
+
+/matchs.json
+  Content-Type: application/json; charset=utf-8
+  Cache-Control: no-store, must-revalidate
+
+/suivi_handball.csv
+  Content-Type: text/csv; charset=utf-8
+  Cache-Control: no-store, must-revalidate
+
+/index.html
+  Cache-Control: no-store, must-revalidate
+
+# Les logos portent l'empreinte du fichier FFHB : leur contenu ne change jamais.
+/logos/*
+  Cache-Control: public, max-age=2592000, immutable
