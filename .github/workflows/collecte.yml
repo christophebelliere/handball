@@ -140,6 +140,13 @@ jobs:
                            posixpath.join(cible, nom))
                   envoyes += 1
 
+          # Fichier laisse par le workflow temoin de diagnostic : on nettoie.
+          try:
+              sftp.remove(posixpath.join(base, "battement.txt"))
+              print("battement.txt supprime")
+          except IOError:
+              pass
+
           taille = sftp.stat(posixpath.join(base, "index.html")).st_size
           sftp.close()
           client.close()
