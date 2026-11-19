@@ -2,9 +2,7 @@
 # Construit dist/ : uniquement les fichiers a publier, plus le _headers de
 # Cloudflare Pages. Aucun script, aucun etat de suivi, aucun cache n'y entre.
 #
-# dist/ est pret a etre deploye tel quel sur Pages. Pour un envoi SFTP vers
-# IONOS, le workflow y ajoute le .htaccess juste avant l'envoi : c'est le seul
-# fichier dont IONOS a besoin et dont Pages ne veut pas.
+# dist/ est deploye tel quel par le workflow (wrangler pages deploy).
 set -euo pipefail
 
 ICI="$(cd "$(dirname "$0")/.." && pwd)"
