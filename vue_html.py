@@ -48,6 +48,10 @@ LIBELLE_FILTRE = {"Championnat": "Championnat",
                   "Preparation": "Preparation",
                   "Coupe": "Coupe"}
 
+# Ordre d'affichage des classements : le championnat fait reference toute la
+# saison, la coupe est un episode. La phase preparatoire vient en dernier.
+ORDRE_CLASSEMENT = {"Championnat": 0, "Coupe": 1, "Preparation": 2}
+
 
 # ------------------------------------------------------------------ outils
 
@@ -343,9 +347,9 @@ table.cl .pts{font-weight:800;color:#fff;text-align:center}
   margin-top:9px;font-size:.75rem;color:var(--muted);
 }
 .w-tag{
-  flex:none;background:rgba(255,255,255,.07);border:1px solid var(--line);
-  border-radius:5px;padding:2px 7px;font-size:.64rem;font-weight:700;
-  letter-spacing:.06em;text-transform:uppercase;color:#cfd4e0;
+  flex:none;background:rgba(255,255,255,.1);border:1px solid #3b4050;
+  border-radius:5px;padding:2px 8px;font-size:.7rem;font-weight:800;
+  letter-spacing:.06em;text-transform:uppercase;color:#fff;
 }
 .w-comp{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
@@ -414,9 +418,29 @@ footer.pied a:hover{color:#fff}
 
 JS = """
 document.documentElement.classList.add('js');
+
+// Le tableau est ecrit dans l'ordre chronologique : c'est ce qu'il faut pour
+// « A venir » (le prochain match en tete). Pour « Resultats », on veut l'inverse,
+// le dernier match joue en premier. Plutot que deux rendus, on deplace les
+// lignes existantes : aucun aller-retour reseau, aucun doublon dans le HTML.
+function ordonner(p, tab){
+  var tb = p.querySelector('tbody');
+  if (!tb) return;
+  var sens = (tab === 'joue') ? -1 : 1;
+  var lignes = Array.prototype.slice.call(tb.querySelectorAll('tr[data-m]'));
+  lignes.sort(function(a, b){
+    var ka = a.getAttribute('data-ordre') || '';
+    var kb = b.getAttribute('data-ordre') || '';
+    if (ka === kb) return 0;
+    return (ka < kb ? -1 : 1) * sens;
+  });
+  for (var i = 0; i < lignes.length; i++) tb.appendChild(lignes[i]);
+}
+
 function appliquer(p){
   var tab = p.dataset.tab || 'avenir';
   var f = p.dataset.filtre || '*';
+  ordonner(p, tab);
   var n = 0;
   p.querySelectorAll('tbody tr[data-m]').forEach(function(tr){
     var ok = (tr.dataset.etat === tab) && (f === '*' || tr.dataset.f === f);
@@ -483,8 +507,13 @@ def ligne_match(m, club):
     if not date:
         date = '<span class="vide">a definir</span>'
 
+    # Cle de tri lisible par le navigateur : "date heure", donc comparable
+    # comme du texte. Sert a inverser l'ordre de l'onglet Resultats (du plus
+    # recent au plus ancien) sans recharger la page.
+    ordre = f"{m.get('date') or '9999-99-99'} {m.get('heure') or '99:99'}"
+
     return (
-        f'<tr data-m data-etat="{etat}" data-f="{filtre}">'
+        f'<tr data-m data-etat="{etat}" data-f="{filtre}" data-ordre="{ordre}">'
         f'<td class="c-date" data-comp="{filtre}">{date}</td>'
         f'<td class="{" ".join(classes)}">{dom}</td>'
         f'<td class="c-score">{box}</td>'
@@ -628,7 +657,14 @@ def bloc_equipe(eq, actif):
     if absent := (not matchs):
         lignes = ""
 
-    classements = "".join(bloc_classement(cl, club) for cl in eq.get("classements", []))
+    # Championnat d'abord, puis coupe, puis phase preparatoire : c'est l'ordre
+    # de lecture attendu, et stabilite du tri conserve l'ordre d'origine a
+    # l'interieur de chaque categorie.
+    classements = "".join(
+        bloc_classement(cl, club)
+        for cl in sorted(eq.get("classements", []),
+                         key=lambda cl: ORDRE_CLASSEMENT.get(filtre_de(cl), 9))
+    )
     bloc_cl = f'<h3 class="h3">Classement</h3>{classements}' if classements else ""
 
     court = eq["libelle"].split()[0]
