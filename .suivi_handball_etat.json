@@ -345,9 +345,9 @@
  },
  "SeniorF Belbeuf|2766698": {
   "date": "2026-11-21",
-  "joue": false,
-  "score_dom": null,
-  "score_ext": null,
+  "joue": true,
+  "score_dom": "16",
+  "score_ext": "29",
   "domicile": "US STEPHANAISE HB",
   "exterieur": "HBC BELBEUF PLATEAU EST"
  }
