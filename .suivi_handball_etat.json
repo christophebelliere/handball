@@ -89,9 +89,9 @@
  },
  "U15M Bonsecours|2757141": {
   "date": "2026-11-21",
-  "joue": false,
-  "score_dom": null,
-  "score_ext": null,
+  "joue": true,
+  "score_dom": "29",
+  "score_ext": "34",
   "domicile": "ES AUMALE 2",
   "exterieur": "E BONSECOURS/BELBEUF"
  },
