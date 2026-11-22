@@ -49,9 +49,9 @@
  },
  "U13M Bonsecours|2756499": {
   "date": "2026-11-21",
-  "joue": false,
-  "score_dom": null,
-  "score_ext": null,
+  "joue": true,
+  "score_dom": "26",
+  "score_ext": "16",
   "domicile": "E BONSECOURS/BELBEUF",
   "exterieur": "HBC AUFFAY-TOTES 1"
  },
