@@ -10,9 +10,9 @@ name: Collecte FFHandball
 # une collecte a moins de 2 h fait sauter la suivante (job « fraicheur »), donc
 # le doublon ne coute rien et le trou de GitHub est comble.
 #
-# Le samedi, le Worker ajoute un passage toutes les 30 min de 10 h a 20 h 37 UTC
-# (voir deploiement/worker/wrangler.toml). Le seuil du job « fraicheur » tombe
-# alors a 25 min, mais seulement s il y a un match ce jour-la.
+# Le samedi, le Worker ajoute un passage toutes les 30 min de 10 h a 22 h 37 UTC.
+# Seuls ceux qui tombent entre 12 h et minuit, heure de Paris, collectent vraiment
+# (voir le job « fraicheur ») : jamais de match le samedi matin.
 on:
   workflow_dispatch:
     inputs:
@@ -56,7 +56,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, os, sys, urllib.request
-          from datetime import datetime, timezone
+          from datetime import datetime, timedelta, timezone
 
           forcer = (os.environ.get("FORCER") or "false").lower() == "true"
           site = os.environ["SITE"]
@@ -82,17 +82,24 @@ jobs:
               decider(True, "site illisible (%s) : on collecte" % erreur)
               sys.exit(0)
 
-          def match_aujourdhui():
-              jour = maintenant.date().isoformat()
+          def match_aujourdhui(jour):
               return any(m.get("date") == jour
                          for eq in donnees.get("equipes", [])
                          for m in eq.get("matchs", []))
 
+          # La fenetre se lit en heure de Paris : 12 h -> minuit, le samedi.
+          # Aucun match le samedi matin, inutile de collecter toutes les 30 min.
+          # Le cron, lui, est en UTC : il couvre large et le seuil fait le tri.
+          try:
+              from zoneinfo import ZoneInfo
+              paris = ZoneInfo("Europe/Paris")
+          except Exception:
+              paris = timezone(timedelta(hours=1))   # repli : Paris en hiver
+          local = maintenant.astimezone(paris)
+
           seuil = float(os.environ.get("SEUIL_HEURES", "2"))
-          # 9 h -> 21 h UTC couvre l apres-midi et la soiree de Paris, hiver
-          # comme ete (le cron rapide s arrete a 20 h 37 UTC).
-          if (maintenant.weekday() == 5 and 9 <= maintenant.hour < 21
-                  and match_aujourdhui()):
+          if (local.weekday() == 5 and local.hour >= 12
+                  and match_aujourdhui(local.date().isoformat())):
               seuil = float(os.environ.get("SEUIL_HEURES_SAMEDI", "0.42"))
 
           if age < seuil:

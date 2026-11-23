@@ -22,15 +22,17 @@ enabled = true
 # reste en secours, et le garde-fou de fraicheur du workflow fait sauter le
 # second declenchement quand les donnees en ligne ont moins de 2 h.
 #
-# Deuxieme cron, le samedi seulement : toutes les 30 min de 10 h a 20 h 37 UTC
-# (11 h - 21 h 37 a Paris en hiver, 12 h - 22 h 37 en ete), pour suivre les
-# scores de l apres-midi. Le garde-fou abaisse alors son seuil a 25 min, sinon
-# chaque passage serait saute. Les minutes :07 et :37 evitent de doubler le
-# cron de 3 h (:42). Ce rythme n existe que cote Cloudflare, c est lui qui part
-# a l heure dite ; un second planificateur rapide ne ferait que dupliquer des
-# declenchements, avec un run sur deux saute par le garde-fou.
+# Deuxieme cron, le samedi seulement : toutes les 30 min de 10 h a 22 h 37 UTC.
+# Le job « fraicheur » ne retient que celles qui tombent entre 12 h et minuit
+# heure de Paris (jamais de match le samedi matin) ; les autres gardent le seuil
+# normal de 2 h et ne collectent donc pas en double. Le garde-fou baisse alors le
+# seuil a 25 min, sinon chaque passage serait saute. Les minutes :07 et :37
+# evitent de doubler le cron de 3 h (:42). Ce rythme n existe que cote
+# Cloudflare, c est lui qui part a l heure dite ; un second planificateur rapide
+# ne ferait que dupliquer des declenchements, avec un run sur deux saute par le
+# garde-fou.
 [triggers]
 crons = [
   "42 1,4,7,10,13,16,19,22 * * *",
-  "7,37 10-20 * * 6",
+  "7,37 10-22 * * 6",
 ]
