@@ -9,11 +9,15 @@ name: Collecte FFHandball
 # Worker Cloudflare, lui, part a l heure dite. Les deux existent volontairement :
 # une collecte a moins de 2 h fait sauter la suivante (job « fraicheur »), donc
 # le doublon ne coute rien et le trou de GitHub est comble.
+#
+# Le samedi, le Worker ajoute un passage toutes les 30 min de 10 h a 20 h 37 UTC
+# (voir deploiement/worker/wrangler.toml). Le seuil du job « fraicheur » tombe
+# alors a 25 min, mais seulement s il y a un match ce jour-la.
 on:
   workflow_dispatch:
     inputs:
       forcer:
-        description: "Collecter meme si les donnees en ligne ont moins de 2 h"
+        description: "Collecter meme si les donnees en ligne sont recentes"
         type: boolean
         default: false
   schedule:
@@ -31,6 +35,11 @@ jobs:
   # Un declenchement en double est sans effet : si le site publie des donnees
   # recentes, on s arrete ici, avant toute collecte. En cas de doute (site
   # injoignable), on collecte : mieux vaut un run de trop qu une page figee.
+  #
+  # Le seuil se resserre le samedi apres-midi, quand le cron Cloudflare passe
+  # toutes les 30 min et que les scores tombent en continu. Il ne se resserre
+  # que s il y a un match ce jour-la : un samedi sans rencontre, rien ne sert
+  # de collecter 22 fois.
   fraicheur:
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -41,6 +50,7 @@ jobs:
         id: verif
         env:
           SEUIL_HEURES: "2"
+          SEUIL_HEURES_SAMEDI: "0.42"
           FORCER: ${{ inputs.forcer }}
           SITE: https://handball.belliere.fr
         run: |
@@ -48,7 +58,6 @@ jobs:
           import json, os, sys, urllib.request
           from datetime import datetime, timezone
 
-          seuil = float(os.environ.get("SEUIL_HEURES", "2"))
           forcer = (os.environ.get("FORCER") or "false").lower() == "true"
           site = os.environ["SITE"]
 
@@ -63,20 +72,34 @@ jobs:
 
           try:
               with urllib.request.urlopen(site + "/matchs.json", timeout=20) as r:
-                  genere = json.load(r)["genere_le"]
-              t = datetime.fromisoformat(genere)
+                  donnees = json.load(r)
+              t = datetime.fromisoformat(donnees["genere_le"])
               if t.tzinfo is None:
                   t = t.replace(tzinfo=timezone.utc)
-              age = (datetime.now(timezone.utc) - t).total_seconds() / 3600
+              maintenant = datetime.now(timezone.utc)
+              age = (maintenant - t).total_seconds() / 3600
           except Exception as erreur:
               decider(True, "site illisible (%s) : on collecte" % erreur)
               sys.exit(0)
 
+          def match_aujourdhui():
+              jour = maintenant.date().isoformat()
+              return any(m.get("date") == jour
+                         for eq in donnees.get("equipes", [])
+                         for m in eq.get("matchs", []))
+
+          seuil = float(os.environ.get("SEUIL_HEURES", "2"))
+          # 9 h -> 21 h UTC couvre l apres-midi et la soiree de Paris, hiver
+          # comme ete (le cron rapide s arrete a 20 h 37 UTC).
+          if (maintenant.weekday() == 5 and 9 <= maintenant.hour < 21
+                  and match_aujourdhui()):
+              seuil = float(os.environ.get("SEUIL_HEURES_SAMEDI", "0.42"))
+
           if age < seuil:
-              decider(False, "donnees en ligne vieilles de %.1f h (< %.0f h) : "
+              decider(False, "donnees en ligne vieilles de %.1f h (< %.2f h) : "
                              "collecte inutile" % (age, seuil))
           else:
-              decider(True, "donnees en ligne vieilles de %.1f h (>= %.0f h)"
+              decider(True, "donnees en ligne vieilles de %.1f h (>= %.2f h)"
                             % (age, seuil))
           PY
 

@@ -23,10 +23,12 @@ par les données officielles de [ffhandball.fr](https://www.ffhandball.fr).
 
 Voir [`deploiement/README.md`](deploiement/README.md).
 
-La collecte tourne toutes les 3 h dans GitHub Actions
-(`.github/workflows/collecte.yml`) puis publie par SFTP sur l'hébergement IONOS.
-Si la collecte est incomplète (site FFHandball indisponible), rien n'est publié
-et la version en ligne reste intacte.
+La collecte tourne dans GitHub Actions (`.github/workflows/collecte.yml`) et
+publie sur **Cloudflare Pages**, servi par <https://handball.belliere.fr>. Si la
+collecte est incomplète (site FFHandball indisponible), rien n'est publié et la
+version en ligne reste intacte.
 
-Le planificateur est commenté tant que les secrets SFTP ne sont pas créés :
-en attendant, la collecte se lance à la main (`Actions` → `Run workflow`).
+Cadence : toutes les 3 h, plus un passage toutes les 30 min le samedi après-midi
+quand une équipe joue. Un déclencheur Cloudflare double le planificateur de
+GitHub, dont les exécutions sautent parfois ; un garde-fou de fraîcheur empêche
+les collectes en double. Aucune machine personnelle n'est nécessaire.

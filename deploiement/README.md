@@ -33,7 +33,8 @@ Ne partent jamais en ligne : les scripts `.py`, l'état de suivi
 ## Architecture
 
 ```
-GitHub Actions (toutes les 3 h, ou lancement manuel)
+GitHub Actions (toutes les 3 h, le samedi toutes les 30 min en journée,
+        │        ou lancement manuel)
         │  python3 suivi_handball.py
         │  contrôle de cohérence       (échec = rien n'est publié)
         │  deploiement/construire.sh   -> dist/
@@ -47,8 +48,9 @@ GitHub Actions (toutes les 3 h, ou lancement manuel)
 Rien ne tourne sur une machine personnelle : le Mac peut être éteint, la page se
 met à jour quand même.
 
-Coût : environ 1 min 30 par exécution, 8 exécutions par jour. Le dépôt est
-public, donc les minutes Actions sont illimitées.
+Coût : environ 1 min 30 par exécution, 8 exécutions par jour (plus 22 le samedi
+après-midi quand une équipe joue). Le dépôt est public, donc les minutes Actions
+sont illimitées.
 
 ## Planification
 
@@ -68,6 +70,32 @@ Le doublon est neutralisé par le job **`fraicheur`**, exécuté en premier : si
 collecte. Conséquence : le cron GitHub peut rester en secours, et un
 déclenchement manuel accidentel ne relance rien. En cas de doute (site
 injoignable), on collecte — un run de trop vaut mieux qu'une page figée.
+
+### Le samedi après-midi
+
+Les scores tombent en continu pendant les rencontres : trois heures d'attente
+seraient visibles. Le Worker ajoute donc, **le samedi uniquement**, un passage
+toutes les 30 minutes :
+
+| Heure UTC | Heure de Paris | |
+|---|---|---|
+| `10:07`, `10:37`, … `20:37` | 11 h – 21 h 37 (hiver) | 12 h – 22 h 37 (été) |
+
+Deux conditions pour que ce rythme serve à quelque chose :
+
+- le job `fraicheur` abaisse son seuil de 2 h à **25 minutes** dans cette
+  fenêtre (9 h → 21 h UTC, pour couvrir l'hiver comme l'été) ;
+- il ne l'abaisse que **s'il y a un match ce jour-là** — un samedi sans
+  rencontre garde le rythme normal. Conséquence : aucun passage inutile en
+  juillet, ni le samedi matin.
+
+Les minutes `:07` et `:37` évitent de doubler le cron de 3 h (`:42`). Ce rythme
+n'existe que côté Cloudflare, qui part à l'heure dite ; le cron GitHub reste le
+filet de sécurité. Si le jeton du Worker venait à expirer, on retomberait
+simplement sur le rythme de 3 h.
+
+Coût : 22 collectes de plus par samedi de compétition, soit environ 15 minutes
+de runner. Le dépôt est public, les minutes Actions sont illimitées.
 
 Pour forcer une collecte malgré tout : `Run workflow` → cocher **forcer**.
 
