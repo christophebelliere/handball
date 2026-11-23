@@ -121,26 +121,44 @@ def date_longue(d):
     return f"{JOURS_LONGS[d.weekday()]} {d.day} {MOIS_LONGS[d.month - 1]}"
 
 
-def matchs_du_weekend(equipes, ref, semaines=26):
-    """Matchs du week-end (samedi + dimanche), jour par jour, tries par heure.
+def semaines_de_matchs(equipes):
+    """Tous les week-ends comptant au moins un match, passes comme a venir.
 
-    Si aucun match n'est programme ce week-end la, on cherche le suivant :
-    la page reste utile en semaine comme pendant les treves.
+    Le samedi sert de cle de regroupement : un match le samedi et un autre le
+    dimanche du meme week-end forment un seul bloc. Chaque entree vaut
+    {"samedi": date, "jours": [(date, [(match, equipe), ...])]}.
     """
-    sam, dim = periode_weekend(ref)
-    for _ in range(semaines):
+    par_samedi = {}
+    for eq in equipes:
+        for m in eq.get("matchs", []):
+            try:
+                d = datetime.strptime(m.get("date") or "", "%Y-%m-%d").date()
+            except ValueError:
+                continue
+            par_samedi.setdefault(periode_weekend(d)[0], []).append((m, eq))
+
+    semaines = []
+    for sam in sorted(par_samedi):
         jours = []
-        for d in (sam, dim):
-            lot = [(m, eq) for eq in equipes for m in eq.get("matchs", [])
+        for d in (sam, sam + timedelta(days=1)):
+            lot = [(m, eq) for m, eq in par_samedi[sam]
                    if m.get("date") == d.isoformat()]
             lot.sort(key=lambda x: (x[0].get("heure") or "99:99",
                                     x[1]["libelle"]))
             if lot:
                 jours.append((d, lot))
         if jours:
-            return sam, jours
-        sam, dim = sam + timedelta(days=7), dim + timedelta(days=7)
-    return None, []
+            semaines.append({"samedi": sam, "jours": jours})
+    return semaines
+
+
+def index_du_weekend(semaines, ref):
+    """Week-end montre par defaut : celui en cours, sinon le suivant."""
+    sam = periode_weekend(ref)[0]
+    for i, s in enumerate(semaines):
+        if s["samedi"] >= sam:
+            return i
+    return len(semaines) - 1
 
 
 def badge(nom, logo=None, extra=""):
@@ -353,6 +371,29 @@ table.cl .pts{font-weight:800;color:#fff;text-align:center}
 }
 .w-comp{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
+/* navigation d'un week-end a l'autre : inutile sans JavaScript, d'ou html.js */
+.we-nav{display:none;align-items:center;gap:8px}
+html.js .we-nav{display:flex}
+.we-btn{
+  width:30px;height:30px;flex:none;display:grid;place-items:center;padding:0 0 2px;
+  background:rgba(255,255,255,.07);border:1px solid var(--line);border-radius:8px;
+  color:#e7eaf2;font-size:1.15rem;line-height:1;cursor:pointer;
+}
+.we-btn:hover:not(:disabled){background:rgba(255,255,255,.16);color:#fff}
+.we-btn:disabled{opacity:.3;cursor:default}
+.we-libelle{
+  font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums;
+}
+.w-fdm{
+  flex:none;margin-left:auto;display:inline-flex;align-items:center;gap:5px;
+  background:rgba(255,255,255,.07);border:1px solid var(--line);
+  border-radius:6px;padding:3px 9px;font-size:.71rem;font-weight:600;
+  color:#cfd4e0;text-decoration:none;white-space:nowrap;
+}
+.w-fdm:hover{background:rgba(255,255,255,.16);border-color:#4a5163;color:#fff}
+.w-fdm span{font-size:.82rem;line-height:1}
+.w-fdm-court{display:none}
+
 footer.pied{
   text-align:center;font-size:.74rem;color:#5f6675;padding:26px 16px 10px;
 }
@@ -412,7 +453,12 @@ footer.pied a:hover{color:#fff}
   .wmatch{grid-template-columns:52px minmax(0,1fr) auto;padding:11px 12px;column-gap:10px}
   .w-heure{font-size:.94rem}
   .w-ligne .nom{font-size:.82rem;line-height:1.3}
-  .w-meta{font-size:.7rem;margin-top:8px}
+  .w-meta{font-size:.7rem;margin-top:8px;flex-wrap:wrap;gap:8px}
+  .we-libelle{font-size:.73rem}
+  .we-btn{width:28px;height:28px}
+  .w-fdm{font-size:.66rem;padding:3px 7px;gap:4px}
+  .w-fdm-long{display:none}
+  .w-fdm-court{display:inline}
 }
 """
 
@@ -473,6 +519,38 @@ document.querySelectorAll('.panel').forEach(function(p){
   });
   appliquer(p);
 });
+
+// ---------------- navigation du programme du week-end
+// Tous les week-ends sont deja ecrits dans la page ; un seul est visible. Les
+// fleches deplacent l attribut hidden : pas de requete, pas de rechargement.
+(function(){
+  var p = document.querySelector('.panel[data-team="weekend"]');
+  if (!p) return;
+  var blocs = p.querySelectorAll('.we');
+  if (blocs.length < 2) return;
+  var libelle = p.querySelector('.we-libelle');
+  var boutons = p.querySelectorAll('.we-btn');
+  var note = p.querySelector('[data-note]');
+  var defaut = parseInt(p.getAttribute('data-defaut'), 10) || 0;
+  var i = defaut;
+
+  function montrer(n){
+    if (n < 0 || n >= blocs.length || n === i) return;
+    blocs[i].hidden = true;
+    i = n;
+    var b = blocs[i];
+    b.hidden = false;
+    var total = parseInt(b.getAttribute('data-total'), 10) || 0;
+    libelle.textContent = b.getAttribute('data-periode') + ' \\u00b7 ' +
+                          total + ' match' + (total > 1 ? 's' : '');
+    boutons[0].disabled = (i === 0);
+    boutons[1].disabled = (i === blocs.length - 1);
+    if (note) note.hidden = (i !== defaut);
+  }
+
+  boutons[0].addEventListener('click', function(){ montrer(i - 1); });
+  boutons[1].addEventListener('click', function(){ montrer(i + 1); });
+})();
 """
 
 
@@ -562,6 +640,22 @@ def bloc_classement(cl, club):
     )
 
 
+def url_feuille(m):
+    """Adresse du PDF officiel de la feuille de match, sinon None.
+
+    ffhandball.fr nomme chaque feuille par un code de 7 caracteres (WAGVOAU) et
+    la sert a l'adresse fdm.fdme.ffhandball.fr/W/A/G/V/WAGVOAU.pdf : les quatre
+    premiers caracteres deviennent des dossiers. La page de la rencontre sert de
+    repli quand le code manque.
+    """
+    code = str(m.get("fdm") or "").strip()
+    if len(code) == 7:
+        return "https://fdm.fdme.ffhandball.fr/" + "/".join(code[:4]) + f"/{code}.pdf"
+    if m.get("id") and m.get("url"):
+        return f'{m["url"]}rencontre-{m["id"]}/'
+    return None
+
+
 def ligne_weekend(m, eq):
     club = eq["club"]
     court = eq["libelle"].split()[0]
@@ -587,21 +681,36 @@ def ligne_weekend(m, eq):
     if m.get("phase"):
         detail += " / " + str(m["phase"]).replace('"', "&quot;")
 
+    # Feuille de match : PDF officiel de la federation quand le code est connu,
+    # sinon la page de la rencontre. Affichee seulement sur un match joue.
+    fdm = ""
+    cible = url_feuille(m) if m["joue"] else None
+    if cible:
+        pdf = cible.endswith(".pdf")
+        titre = ("Telecharger la feuille de match (PDF)"
+                 if pdf else "Ouvrir la rencontre sur ffhandball.fr")        # Deux libelles : « Feuille de match » sur ecran large, « FDME » sur
+        # mobile ou la ligne doit tenir a cote de « Championnat ».
+        fdm = (f'<a class="w-fdm" href="{cible}" target="_blank" rel="noopener"'
+               f' title="{titre} - nouvel onglet">'
+               '<span class="w-fdm-long">Feuille de match</span>'
+               '<span class="w-fdm-court">FDME</span>'
+               '<span aria-hidden="true">&#8599;</span></a>')
+
     return (
         '<article class="wmatch">'
         f'<div class="w-heure">{m.get("heure") or "--:--"}</div>'
         f'<div class="w-eq">{equipes}</div>'
         f'<div class="w-score">{score}</div>'
         f'<div class="w-meta"><span class="w-tag">{court}</span>'
-        f'<span class="w-comp" title="{detail}">{filtre_de(m)}</span></div>'
+        f'<span class="w-comp" title="{detail}">{filtre_de(m)}</span>{fdm}</div>'
         '</article>'
     )
 
 
 def bloc_weekend(equipes, ref):
-    sam, jours = matchs_du_weekend(equipes, ref)
+    semaines = semaines_de_matchs(equipes)
 
-    if not jours:
+    if not semaines:
         return """
   <section class="panel on" data-team="weekend" data-tab="avenir" data-filtre="*">
     <div class="panel-head"><h2>Programme du week-end</h2></div>
@@ -609,36 +718,57 @@ def bloc_weekend(equipes, ref):
       journees ne sont pas encore programmees par la federation.</div>
   </section>"""
 
-    total = sum(len(lot) for _, lot in jours)
-    dates = [d for d, _ in jours]
-    if len(dates) == 1:
-        periode = date_longue(dates[0])
-    else:
-        periode = f"{date_longue(dates[0])} et {date_longue(dates[-1])}"
-    periode += f" {dates[0].year}"
+    actif = index_du_weekend(semaines, ref)
 
-    note = ""
-    if sam and sam != periode_weekend(ref)[0]:
-        note = ('<p class="w-note">Aucun match ce week-end : '
-                'voici le week-end suivant.</p>')
+    def resume(s):
+        dates = [d for d, _ in s["jours"]]
+        if len(dates) == 1:
+            periode = date_longue(dates[0])
+        else:
+            periode = f"{date_longue(dates[0])} et {date_longue(dates[-1])}"
+        total = sum(len(lot) for _, lot in s["jours"])
+        return periode + f" {dates[0].year}", total
 
-    corps = []
-    for d, lot in jours:
-        corps.append(
+    # Tous les week-ends sont ecrits dans la page, un seul est visible : les
+    # fleches ne font que deplacer un attribut hidden, sans requete ni rechargement.
+    blocs = []
+    for i, s in enumerate(semaines):
+        periode, total = resume(s)
+        corps = "".join(
             f'<div class="jour"><div class="jour-titre">'
             f'<b>{date_longue(d)}</b></div>'
             + "".join(ligne_weekend(m, eq) for m, eq in lot)
             + "</div>"
+            for d, lot in s["jours"]
+        )
+        blocs.append(
+            f'<div class="we"{"" if i == actif else " hidden"}'
+            f' data-periode="{periode}" data-total="{total}">{corps}</div>'
         )
 
+    periode, total = resume(semaines[actif])
+    libelle = f'{periode} &middot; {total} match{"s" if total > 1 else ""}'
+
+    note = ""
+    if semaines[actif]["samedi"] != periode_weekend(ref)[0]:
+        note = ('<p class="w-note" data-note>Aucun match ce week-end : '
+                'voici le week-end suivant.</p>')
+
     return f"""
-  <section class="panel on" data-team="weekend" data-tab="avenir" data-filtre="*">
+  <section class="panel on" data-team="weekend" data-tab="avenir" data-filtre="*"
+           data-defaut="{actif}">
     <div class="panel-head">
-      <h2>Programme du week-end
-        <small>{periode} &middot; {total} match{'s' if total > 1 else ''}</small></h2>
+      <h2>Programme du week-end</h2>
+      <div class="we-nav">
+        <button class="we-btn" type="button" data-sens="-1" title="Week-end precedent"
+                aria-label="Week-end precedent"{' disabled' if actif == 0 else ''}>&lsaquo;</button>
+        <div class="we-libelle" aria-live="polite">{libelle}</div>
+        <button class="we-btn" type="button" data-sens="1" title="Week-end suivant"
+                aria-label="Week-end suivant"{' disabled' if actif == len(semaines) - 1 else ''}>&rsaquo;</button>
+      </div>
     </div>
     {note}
-    <div class="weekend">{''.join(corps)}</div>
+    <div class="weekend">{''.join(blocs)}</div>
   </section>"""
 
 

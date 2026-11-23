@@ -481,6 +481,9 @@ def scraper_poule(poule_id, competition, etiquette, verbose=True):
             "poule_id": poule_id,
             "poule": None,
             "url": url,
+            # Code de la feuille de match electronique : sert a composer l URL
+            # du PDF officiel (fdm.fdme.ffhandball.fr). Peut manquer.
+            "fdm": r.get("fdmCode") or None,
             "logo_dom": r.get("structure1Logo") or None,
             "logo_ext": r.get("structure2Logo") or None,
         }
@@ -701,6 +704,7 @@ def exporter_json(matchs):
                     "phase": m.get("phase"),
                     "poule": m.get("poule"),
                     "url": m["url"],
+                    "fdm": m.get("fdm"),
                     "logo_dom": logo_local(m.get("logo_dom")),
                     "logo_ext": logo_local(m.get("logo_ext")),
                 }
