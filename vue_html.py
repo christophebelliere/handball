@@ -286,6 +286,7 @@ tr[hidden]{display:none}
 .badge{
   position:relative; overflow:hidden;
   display:inline-flex;align-items:center;justify-content:center;
+  flex:none; /* dans une ligne flex (week-end), sans cela la pastille s'ecrase */
   width:26px;height:26px;border-radius:50%;margin-right:9px;
   font-size:.62rem;font-weight:800;letter-spacing:.02em;vertical-align:middle;
   background:hsl(var(--h) 62% 34%); color:#fff;
@@ -395,7 +396,7 @@ html.js .we-nav{display:flex}
 .w-fdm-court{display:none}
 
 footer.pied{
-  text-align:center;font-size:.74rem;color:#5f6675;padding:26px 16px 10px;
+  text-align:center;font-size:.74rem;color:#7b8291;padding:26px 16px 10px;
 }
 footer.pied a{color:#9aa3b8;text-decoration:none;border-bottom:1px dotted #565d6d}
 footer.pied a:hover{color:#fff}
@@ -860,7 +861,18 @@ def rendre_page(data):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0c0d10">
+<meta name="description" content="Matchs, scores et classements des équipes de handball de Bonsecours et Belbeuf.">
 <title>Handball - Bonsecours / Belbeuf</title>
+<!-- PWA : icone sur l'ecran d'accueil, ouverture plein ecran. Pas de service
+     worker : les donnees sont toujours lues en ligne, jamais dans un cache. -->
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icones/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="icones/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Handball">
 <style>{CSS}</style>
 </head>
 <body>
@@ -877,9 +889,9 @@ def rendre_page(data):
   </div>
 </header>
 
-<div class="wrap">
+<main class="wrap">
 {panneaux}
-</div>
+</main>
 
 <footer class="pied">
   Donnees officielles FFHandball &middot; logos des clubs via FFHandball &middot;

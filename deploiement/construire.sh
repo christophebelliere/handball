@@ -14,11 +14,19 @@ for f in index.html matchs.json calendrier.ics suivi_handball.csv; do
   [ -f "$f" ] || { echo "manquant : $f (lancer suivi_handball.py d'abord)" >&2; exit 1; }
 done
 
+for f in deploiement/pages/manifest.webmanifest deploiement/pages/icones/icone-192.png; do
+  [ -f "$f" ] || { echo "manquant : $f" >&2; exit 1; }
+done
+
 rm -rf "$DIST"
 mkdir -p "$DIST"
 
 cp index.html matchs.json calendrier.ics suivi_handball.csv "$DIST/"
 cp -R logos "$DIST/logos"
+
+# PWA : manifeste + icones (ecran d'accueil, favicon, icone iOS)
+cp deploiement/pages/manifest.webmanifest "$DIST/"
+cp -R deploiement/pages/icones "$DIST/icones"
 
 # cadrage.json sert au rendu, pas a l'affichage : il reste cote code.
 rm -f "$DIST/logos/cadrage.json"

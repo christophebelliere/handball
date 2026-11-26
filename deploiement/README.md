@@ -17,14 +17,16 @@ contient qu'un `CNAME` vers Pages. Mail, SPF, DMARC et wildcard sont intacts.
 
 | Fichier | Rôle | Taille |
 |---|---|---|
-| `index.html` | la page (style, onglets, données incluses) | 71 Ko |
-| `calendrier.ics` | le flux à souscrire dans Outlook | 8 Ko |
-| `matchs.json` | données brutes, utilisées par la page | 41 Ko |
+| `index.html` | la page (style, onglets, données incluses) | 110 Ko |
+| `calendrier.ics` | le flux à souscrire dans Outlook | 9 Ko |
+| `matchs.json` | données brutes, utilisées par la page | 42 Ko |
 | `suivi_handball.csv` | export tableur | 13 Ko |
-| `logos/*.webp` | 19 logos de clubs | 136 Ko |
-| `_headers` | en-têtes HTTP (type MIME du `.ics`, cache) | 1 Ko |
+| `logos/*.webp` | 19 logos de clubs | 96 Ko |
+| `manifest.webmanifest` | description de l'application (PWA) | 1 Ko |
+| `icones/*.png` | icône de l'écran d'accueil et favicon | 87 Ko |
+| `_headers` | en-têtes HTTP (types MIME, cache) | 2 Ko |
 
-**280 Ko, 24 fichiers.** Aucune base de données : le site est entièrement
+**359 Ko, 30 fichiers.** Aucune base de données : le site est entièrement
 statique.
 
 Ne partent jamais en ligne : les scripts `.py`, l'état de suivi
@@ -51,6 +53,48 @@ met à jour quand même.
 Coût : environ 1 min 30 par exécution, 8 exécutions par jour (plus 22 le samedi
 après-midi quand une équipe joue). Le dépôt est public, donc les minutes Actions
 sont illimitées.
+
+## Application sur l'écran d'accueil (PWA)
+
+Le site peut s'installer comme une application sur iPhone et Android : icône,
+nom « Handball », ouverture plein écran. Ce n'est pas une application native et
+rien n'est publié sur l'App Store.
+
+| | |
+|---|---|
+| Fichiers | `manifest.webmanifest` et `icones/` |
+| Installation iPhone | Safari → **Partager** → **Sur l'écran d'accueil** |
+| Installation Android | Chrome → menu → **Installer l'application** |
+| Hors-ligne | non : la page a toujours besoin du réseau |
+| Notifications | non |
+
+Pas de service worker, volontairement : la page est régénérée toutes les 3 h
+(30 min le samedi), un cache local servirait des scores périmés. Sans cache, la
+version affichée est toujours celle du site.
+
+Ce qu'iOS ne permet pas :
+
+- **pas d'invite d'installation** : l'ajout à l'écran d'accueil reste manuel,
+  contrairement à Android ;
+- **pas de rafraîchissement en arrière-plan** : les données sont relues à
+  l'ouverture ;
+- **pas de notifications** sans service worker et sans serveur d'envoi.
+
+### Régénérer les icônes
+
+Nécessite macOS et Swift. Les PNG sont versionnés : la publication sur
+Cloudflare n'appelle jamais ce script.
+
+```bash
+swift deploiement/icones.swift
+python3 deploiement/optimiser_png.py deploiement/pages/icones/*.png
+```
+
+Le dessin (dégradé du bandeau, pointillés, silhouette du joueur) est dans
+`deploiement/icones.swift` ; la silhouette elle-même est le PNG blanc sur
+transparent `deploiement/sources/silhouette.png`, qui n'est **pas publié** :
+seul `deploiement/pages/` part sur Cloudflare. L'optimiseur recompresse les PNG
+**sans perte** (120 Ko → 35 Ko pour le 512).
 
 ## Planification
 

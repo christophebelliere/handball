@@ -8,6 +8,8 @@ par les données officielles de [ffhandball.fr](https://www.ffhandball.fr).
 - `matchs.json` — données brutes
 - `suivi_handball.csv` — export tableur
 - `logos/` — logos des clubs, téléchargés depuis FFHandball
+- `manifest.webmanifest` + `icones/` — installation sur l'écran d'accueil
+  (iPhone / Android), sans cache local
 
 ## Fonctionnement
 
