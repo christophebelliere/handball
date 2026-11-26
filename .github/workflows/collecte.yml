@@ -22,6 +22,14 @@ on:
         default: false
   schedule:
     - cron: "17 1,4,7,10,13,16,19,22 * * *"
+  # Un push de code publie tout de suite : sans ce declencheur, une correction
+  # attendait la collecte suivante (jusqu'a 3 h) avant d'etre en ligne. Les
+  # commits d'etat faits par le workflow ne relancent rien, seules les donnees
+  # changent (paths-ignore ci-dessous).
+  push:
+    paths-ignore:
+      - ".suivi_handball_etat.json"
+      - "logos/**"
 
 permissions:
   contents: write
@@ -51,7 +59,9 @@ jobs:
         env:
           SEUIL_HEURES: "2"
           SEUIL_HEURES_SAMEDI: "0.42"
-          FORCER: ${{ inputs.forcer }}
+          # Un push de code publie tout de suite : on force la collecte, qui
+          # reconstruit et redeploie la page avec le nouveau code.
+          FORCER: ${{ inputs.forcer || github.event_name == 'push' }}
           SITE: https://handball.belliere.fr
         run: |
           python3 - <<'PY'
