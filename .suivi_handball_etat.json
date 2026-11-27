@@ -350,5 +350,21 @@
   "score_ext": "29",
   "domicile": "US STEPHANAISE HB",
   "exterieur": "HBC BELBEUF PLATEAU EST"
+ },
+ "SeniorF Belbeuf|2797230": {
+  "date": "",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "NEUFCHATEL HANDBALL",
+  "exterieur": "HBC BELBEUF PLATEAU EST"
+ },
+ "SeniorF Belbeuf|2797231": {
+  "date": "",
+  "joue": false,
+  "score_dom": null,
+  "score_ext": null,
+  "domicile": "A.S.L.CHEMIN VERT",
+  "exterieur": "HBC BELBEUF PLATEAU EST"
  }
 }
